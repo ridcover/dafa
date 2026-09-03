@@ -29,18 +29,103 @@ async function testConnection() {
     const connection = await pool.getConnection();
     console.log(`[Database] Terhubung ke MySQL database '${dbName}' sebagai user '${dbUser}' dengan sukses.`);
 
-    // Auto-migration: pastikan seluruh 7 kolom jabatan ada di tabel client_access
+    // 1. Auto-bootstrap: pastikan seluruh 6 tabel utama ada di database
     try {
-      const [tables] = await connection.query(`SHOW TABLES LIKE 'client_access'`);
-      if (tables.length > 0) {
-        const [columns] = await connection.query(`SHOW COLUMNS FROM client_access`);
-        const existingCols = columns.map(c => c.Field);
-        const requiredCols = ['kepsek', 'waka_kurikulum', 'waka_kesiswaan', 'waka_sarpras', 'bendahara', 'tu', 'guru'];
-        for (const col of requiredCols) {
-          if (!existingCols.includes(col)) {
-            console.log(`[Database Auto-Migration] Menambahkan kolom '${col}' ke tabel client_access...`);
-            await connection.query(`ALTER TABLE client_access ADD COLUMN \`${col}\` TINYINT(1) DEFAULT 0`);
-          }
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          nama VARCHAR(100) NOT NULL,
+          username VARCHAR(50) NOT NULL UNIQUE,
+          password VARCHAR(255) NOT NULL,
+          role ENUM('admin', 'client') DEFAULT 'client',
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS client_access (
+          user_id INT PRIMARY KEY,
+          kepsek BOOLEAN DEFAULT 0,
+          waka_kurikulum BOOLEAN DEFAULT 0,
+          waka_kesiswaan BOOLEAN DEFAULT 0,
+          waka_sarpras BOOLEAN DEFAULT 0,
+          bendahara BOOLEAN DEFAULT 0,
+          tu BOOLEAN DEFAULT 0,
+          guru BOOLEAN DEFAULT 0,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          CONSTRAINT fk_client_access_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS tahun_akademik (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          ta VARCHAR(50) UNIQUE NOT NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS global_settings (
+          id INT PRIMARY KEY,
+          active_tahun_pelajaran VARCHAR(50) NOT NULL DEFAULT '2026/2027',
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      await connection.query(`
+        INSERT IGNORE INTO global_settings (id, active_tahun_pelajaran) VALUES (1, '2026/2027');
+      `);
+
+      await connection.query(`
+        INSERT IGNORE INTO tahun_akademik (id, ta) VALUES 
+        (1, '2024/2025'),
+        (2, '2025/2026'),
+        (3, '2026/2027');
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS archives (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          stored_name VARCHAR(255) NOT NULL,
+          original_name VARCHAR(255) NOT NULL,
+          isFolder TINYINT(1) DEFAULT 0,
+          size INT DEFAULT 0,
+          tapel VARCHAR(50) NOT NULL,
+          jabatan VARCHAR(100) NOT NULL,
+          parent_path TEXT,
+          user_id INT,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_tapel_jabatan (tapel, jabatan),
+          INDEX idx_user_id (user_id),
+          CONSTRAINT fk_archives_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS audit_logs (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          user_id INT,
+          username VARCHAR(50),
+          action VARCHAR(100),
+          details TEXT,
+          ip_address VARCHAR(45),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_audit_user (user_id),
+          INDEX idx_audit_action (action)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+      `);
+
+      // Pastikan seluruh 7 kolom jabatan ada di tabel client_access
+      const [columns] = await connection.query(`SHOW COLUMNS FROM client_access`);
+      const existingCols = columns.map(c => c.Field);
+      const requiredCols = ['kepsek', 'waka_kurikulum', 'waka_kesiswaan', 'waka_sarpras', 'bendahara', 'tu', 'guru'];
+      for (const col of requiredCols) {
+        if (!existingCols.includes(col)) {
+          console.log(`[Database Auto-Migration] Menambahkan kolom '${col}' ke tabel client_access...`);
+          await connection.query(`ALTER TABLE client_access ADD COLUMN \`${col}\` TINYINT(1) DEFAULT 0`);
         }
       }
     } catch (migErr) {

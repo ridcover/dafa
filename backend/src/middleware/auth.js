@@ -146,8 +146,11 @@ async function checkLockedYear(req, res, next) {
     }
 
     // Ambil tahun aktif dari database
-    const [settings] = await pool.query('SELECT active_tahun_pelajaran FROM global_settings WHERE id = 1');
-    const activeTapel = settings.length > 0 ? settings[0].active_tahun_pelajaran : null;
+    let activeTapel = '2026/2027';
+    try {
+      const [settings] = await pool.query('SELECT active_tahun_pelajaran FROM global_settings WHERE id = 1');
+      if (settings.length > 0) activeTapel = settings[0].active_tahun_pelajaran;
+    } catch (e) {}
 
     if (activeTapel && requestedTapel !== activeTapel) {
       return res.status(403).json({

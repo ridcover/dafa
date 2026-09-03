@@ -14,8 +14,12 @@ const { normalizeJabatanKey } = require('../utils/folderGenerator');
  * Helper: Ambil tahun pelajaran aktif
  */
 async function getActiveTapel() {
-  const [settings] = await pool.query('SELECT active_tahun_pelajaran FROM global_settings WHERE id = 1');
-  return settings.length > 0 ? settings[0].active_tahun_pelajaran : '2026/2027';
+  try {
+    const [settings] = await pool.query('SELECT active_tahun_pelajaran FROM global_settings WHERE id = 1');
+    return settings.length > 0 ? settings[0].active_tahun_pelajaran : '2026/2027';
+  } catch (err) {
+    return '2026/2027';
+  }
 }
 
 /**
