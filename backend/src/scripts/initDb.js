@@ -4,15 +4,16 @@ const mysql = require('mysql2/promise');
 const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../../.env') });
+dotenv.config({ path: path.join(__dirname, '../../../.env') });
 
 async function initDatabase() {
-  const host = process.env.DB_HOST || 'localhost';
+  const host = process.env.DB_HOST || '127.0.0.1';
   const port = parseInt(process.env.DB_PORT || '3306', 10);
-  const user = process.env.DB_USER || 'root';
-  const password = process.env.DB_PASS || '';
-  const database = process.env.DB_NAME || 'db_dafa_archive';
+  const user = process.env.DB_USER || process.env.DB_USERNAME || 'root';
+  const password = process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : (process.env.DB_PASS || '');
+  const database = process.env.DB_NAME || process.env.DB_DATABASE || 'db_dafa_archive';
 
-  console.log(`[InitDB] Menghubungkan ke MySQL di ${host}:${port} dengan user '${user}'...`);
+  console.log(`[InitDB] Menghubungkan ke MySQL di ${host}:${port} dengan user '${user}' (DB: ${database})...`);
 
   let connection;
   try {
@@ -27,9 +28,12 @@ async function initDatabase() {
 
     console.log(`[InitDB] Membaca file SQL dari database/schema_and_seed.sql...`);
     const sqlPath = path.join(__dirname, '../../../database/schema_and_seed.sql');
-    const sqlContent = fs.readFileSync(sqlPath, 'utf8');
+    let sqlContent = fs.readFileSync(sqlPath, 'utf8');
 
-    console.log(`[InitDB] Menjalankan script SQL pembuatan database dan seed data 19 pengguna + 1 admin...`);
+    // Ganti nama database secara dinamis sesuai .env
+    sqlContent = sqlContent.replace(/`db_dafa_archive`/g, `\`${database}\``);
+
+    console.log(`[InitDB] Menjalankan script SQL pembuatan database '${database}' dan seed data...`);
     await connection.query(sqlContent);
 
     console.log(`[InitDB] Inisialisasi Database '${database}' BERHASIL!`);
