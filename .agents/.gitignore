@@ -1,0 +1,16 @@
+# Snowline Agent Tools - keadaan lokal, jangan di-commit
+write_log.jsonl
+scope_lock.json
+task_lock.json
+session_cache.json
+decision_history.json
+companion_usage.jsonl
+mode_ringan.json
+memory.json
+chamber/role.json
+role.json
+.agents_md_baseline_hash
+hooks/.history/
+test_history/
+*.pyc
+__pycache__/

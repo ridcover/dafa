@@ -1,0 +1,49 @@
+{
+  "c4-loop-detector": {
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/loop_detector.py"
+          }
+        ]
+      }
+    ]
+  },
+  "arah6-quality-gate": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/quality_gate.py"
+          }
+        ]
+      }
+    ]
+  },
+  "git-rollback-enforcer": {
+    "Stop": [
+      {
+        "type": "command",
+        "command": "python hooks/rollback_enforcer.py"
+      }
+    ]
+  },
+  "scope-guardian-native": {
+    "PreToolUse": [
+      {
+        "matcher": "write_to_file|replace_file_content|multi_replace_file_content",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python hooks/intercept_native.py"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "reader_58d779b93b59d350f8e859c4375bf4ed": {
+    "file": "frontend/src/components/Admin/AuditLogs.jsx",
+    "mtime": "1788441584.5149007",
+    "toc": [
+      {
+        "line": 1,
+        "type": "Import",
+        "name": "import React, { useState, useEffect } from 'react'"
+      },
+      {
+        "line": 15,
+        "type": "Import",
+        "name": "import { formatDate } from '../../utils/constants'"
+      },
+      {
+        "line": 16,
+        "type": "Import",
+        "name": "import api from '../../services/api'"
+      },
+      {
+        "line": 30,
+        "type": "Export",
+        "name": "AuditLogs"
+      },
+      {
+        "line": 30,
+        "type": "Function",
+        "name": "AuditLogs"
+      },
+      {
+        "line": 32,
+        "type": "State",
+        "name": "[logs, setLogs]"
+      },
+      {
+        "line": 33,
+        "type": "State",
+        "name": "[loading, setLoading]"
+      },
+      {
+        "line": 34,
+        "type": "State",
+        "name": "[search, setSearch]"
+      },
+      {
+        "line": 35,
+        "type": "State",
+        "name": "[actionFilter, setActionFilter]"
+      },
+      {
+        "line": 36,
+        "type": "State",
+        "name": "[page, setPage]"
+      },
+      {
+        "line": 37,
+        "type": "State",
+        "name": "[totalPages, setTotalPages]"
+      },
+      {
+        "line": 38,
+        "type": "State",
+        "name": "[totalRecords, setTotalRecords]"
+      },
+      {
+        "line": 39,
+        "type": "State",
+        "name": "[error, setError]"
+      },
+      {
+        "line": 40,
+        "type": "Arrow Function",
+        "name": "fetchLogs()"
+      },
+      {
+        "line": 61,
+        "type": "Effect",
+        "name": "useEffect"
+      },
+      {
+        "line": 65,
+        "type": "Arrow Function",
+        "name": "handleSearchSubmit(e)"
+      },
+      {
+        "line": 71,
+        "type": "Arrow Function",
+        "name": "handleClearLogs()"
+      }
+    ]
+  },
+  "reader_c7dd77171ab6965ba99a4564c62f7959": {
+    "file": "frontend/src/components/Admin/UserManagement.jsx",
+    "mtime": "1788441584.5223355",
+    "toc": [
+      {
+        "line": 1,
+        "type": "Import",
+        "name": "import React, { useState, useEffect } from 'react'"
+      },
+      {
+        "line": 14,
+        "type": "Import",
+        "name": "import { ROLES_LIST } from '../../utils/constants'"
+      },
+      {
+        "line": 15,
+        "type": "Import",
+        "name": "import api from '../../services/api'"
+      },
+      {
+        "line": 16,
+        "type": "Export",
+        "name": "UserManagement"
+      },
+      {
+        "line": 16,
+        "type": "Function",
+        "name": "UserManagement"
+      },
+      {
+        "line": 18,
+        "type": "State",
+        "name": "[users, setUsers]"
+      },
+      {
+        "line": 19,
+        "type": "State",
+        "name": "[loading, setLoading]"
+      },
+      {
+        "line": 20,
+        "type": "State",
+        "name": "[search, setSearch]"
+      },
+      {
+        "line": 21,
+        "type": "State",
+        "name": "[error, setError]"
+      },
+      {
+        "line": 22,
+        "type": "State",
+        "name": "[success, setSuccess]"
+      },
+      {
+        "line": 25,
+        "type": "State",
+        "name": "[showAddModal, setShowAddModal]"
+      },
+      {
+        "line": 26,
+        "type": "State",
+        "name": "[showResetModal, setShowResetModal]"
+      },
+      {
+        "line": 27,
+        "type": "State",
+        "name": "[selectedUser, setSelectedUser]"
+      },
+      {
+        "line": 30,
+        "type": "State",
+        "name": "[newUserData, setNewUserData]"
+      },
+      {
+        "line": 45,
+        "type": "Arrow Function",
+        "name": "fetchUsers()"
+      },
+      {
+        "line": 57,
+        "type": "Effect",
+        "name": "useEffect"
+      },
+      {
+        "line": 63,
+        "type": "Arrow Function",
+        "name": "handleToggleRole(user, roleKey)"
+      },
+      {
+        "line": 80,
+        "type": "Arrow Function",
+        "name": "handleAddUserSubmit(e)"
+      },
+      {
+        "line": 101,
+        "type": "Arrow Function",
+        "name": "handleResetPassword(user)"
+      },
+      {
+        "line": 113,
+        "type": "Arrow Function",
+        "name": "handleDeleteUser(user)"
+      }
+    ]
+  }
+}
