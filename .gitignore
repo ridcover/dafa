@@ -20,11 +20,6 @@ frontend/.env.production
 !.env.example
 !**/.env.example
 
-# Uploads & User Generated Files
-backend/uploads/
-uploads/
-**/uploads/
-
 # Build outputs
 dist/
 build/
