@@ -19,6 +19,7 @@ import {
   Info
 } from 'lucide-react';
 import { formatBytes, formatDate, getFileType, JABATAN_MAP } from '../../utils/constants';
+import api from '../../services/api';
 
 export default function FilePreview({ item, onClose, onDownload }) {
   const [textContent, setTextContent] = useState('');
@@ -38,10 +39,9 @@ export default function FilePreview({ item, onClose, onDownload }) {
 
     if (item && fileType === 'text') {
       setLoadingText(true);
-      fetch(previewUrl)
-        .then((res) => res.text())
-        .then((text) => {
-          setTextContent(text);
+      api.get(previewUrl, { responseType: 'text' })
+        .then((res) => {
+          setTextContent(typeof res.data === 'string' ? res.data : JSON.stringify(res.data, null, 2));
           setLoadingText(false);
         })
         .catch(() => {
@@ -92,8 +92,8 @@ export default function FilePreview({ item, onClose, onDownload }) {
             )}
           </div>
           <div className="truncate">
-            <h4 className="text-xs font-bold text-slate-100 truncate" title={item.original_name || item.name}>
-              {item.original_name || item.name}
+            <h4 className="text-xs font-bold text-slate-100 truncate" title={item.stored_name || item.name || item.original_name}>
+              {item.stored_name || item.name || item.original_name}
             </h4>
             <div className="flex items-center space-x-2 text-[10px] text-slate-400">
               <span>{formatBytes(item.size)}</span>
@@ -101,6 +101,12 @@ export default function FilePreview({ item, onClose, onDownload }) {
               <span className="text-emerald-400">{JABATAN_MAP[item.jabatan] || item.jabatan}</span>
               <span>•</span>
               <span>{item.uploader_nama || 'Sistem'}</span>
+              {item.original_name && item.original_name !== (item.stored_name || item.name) && (
+                <>
+                  <span>•</span>
+                  <span className="text-slate-400" title={`Nama Asli: ${item.original_name}`}>Asli: {item.original_name}</span>
+                </>
+              )}
             </div>
           </div>
         </div>

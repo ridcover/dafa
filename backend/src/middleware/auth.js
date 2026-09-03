@@ -18,6 +18,10 @@ async function authenticateToken(req, res, next) {
     else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
       token = req.headers.authorization.split(' ')[1];
     }
+    // 3. Cek dari Query Parameter (Fallback untuk tag <iframe> / <img> preview)
+    else if (req.query && req.query.token) {
+      token = req.query.token;
+    }
 
     if (!token) {
       return res.status(401).json({
@@ -128,6 +132,11 @@ async function checkLockedYear(req, res, next) {
   try {
     // Lewati jika request bertipe pembacaan data (GET / HEAD)
     if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+      return next();
+    }
+
+    // Administrator memiliki akses penuh untuk mengelola seluruh tahun pelajaran
+    if (req.user && req.user.isAdmin) {
       return next();
     }
 

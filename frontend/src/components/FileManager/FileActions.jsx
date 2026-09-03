@@ -99,15 +99,20 @@ export default function FileActions({
       return;
     }
 
+    if (!user?.isAdmin && (!parentPath || !parentPath.includes('/'))) {
+      setUploadError('Anda wajib membuka salah satu sub-folder standar SNP terlebih dahulu sebelum mengunggah berkas.');
+      return;
+    }
+
     try {
       setIsUploading(true);
       setUploadError('');
 
       const formData = new FormData();
-      formData.append('file', selectedFile);
       formData.append('tapel', currentTapel);
       formData.append('jabatan', uploadJabatan);
       formData.append('parent_path', parentPath || '');
+      formData.append('file', selectedFile);
 
       await api.post('/archives/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -248,15 +253,17 @@ export default function FileActions({
 
           {userHasWrite ? (
             <>
-              {/* Buat Folder */}
-              <button
-                onClick={() => { setFolderError(''); setFolderName(''); setShowFolderModal(true); }}
-                className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 text-xs font-semibold border border-amber-500/30 transition-colors shadow-sm"
-                title="Buat folder baru pada lokasi ini"
-              >
-                <FolderPlus className="w-4 h-4 text-amber-400" />
-                <span>Buat Folder</span>
-              </button>
+              {/* Buat Folder (Hanya untuk Admin) */}
+              {user?.isAdmin && (
+                <button
+                  onClick={() => { setFolderError(''); setFolderName(''); setShowFolderModal(true); }}
+                  className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 hover:text-amber-200 text-xs font-semibold border border-amber-500/30 transition-colors shadow-sm"
+                  title="Buat folder baru (Administrator Only)"
+                >
+                  <FolderPlus className="w-4 h-4 text-amber-400" />
+                  <span>Buat Folder</span>
+                </button>
+              )}
 
               {/* Upload Berkas */}
               <button

@@ -179,6 +179,19 @@ router.post('/upload', authenticateToken, checkLockedYear, upload.single('file')
       });
     }
 
+    // Aktor non-admin tidak boleh meletakkan berkas di luar folder SNP yang telah ditentukan
+    if (!req.user.isAdmin) {
+      if (!parentPath || !parentPath.includes('/')) {
+        if (fs.existsSync(req.file.path)) {
+          try { fs.unlinkSync(req.file.path); } catch (e) {}
+        }
+        return res.status(403).json({
+          success: false,
+          message: 'Akses ditolak: Berkas wajib diunggah ke dalam sub-folder standar SNP yang telah disediakan, bukan di luar folder.'
+        });
+      }
+    }
+
     const storedName = req.file.autoStoredName || req.file.filename;
     const originalName = req.file.decodedOriginalName || req.file.originalname;
     const fileSize = req.file.size;
@@ -228,28 +241,22 @@ router.post('/upload', authenticateToken, checkLockedYear, upload.single('file')
 
 /**
  * POST /api/archives/folder
- * Membuat folder baru
+ * Membuat folder baru (Admin Only)
  */
 router.post('/folder', authenticateToken, checkLockedYear, async (req, res) => {
   try {
+    // Hanya Administrator yang boleh membuat folder baru
+    if (!req.user.isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak: Hanya Administrator yang berwenang membuat folder baru.'
+      });
+    }
+
     const { name, tapel, jabatan, parent_path } = req.body;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ success: false, message: 'Nama folder tidak boleh kosong.' });
-    }
-
-    const folderName = name.trim().replace(/[\/\\:*?"<>|]/g, '');
-    const activeTapel = await getActiveTapel();
-    const currentTapel = tapel || activeTapel;
-    const parentPath = parent_path || '';
-    const targetJabatan = normalizeJabatanKey(jabatan || (parentPath ? parentPath.split('/')[0] : 'guru'));
-
-    // Cek otorisasi jabatan jika bukan admin
-    if (!req.user.isAdmin && !req.user.access[targetJabatan]) {
-      return res.status(403).json({
-        success: false,
-        message: `Akses ditolak: Anda tidak memiliki wewenang membuat folder pada jabatan '${targetJabatan}'.`
-      });
     }
 
     // Cek apakah folder sudah ada di DB
@@ -337,9 +344,9 @@ router.put('/:id/rename', authenticateToken, checkLockedYear, async (req, res) =
 
     const item = archives[0];
 
-    // Cek penguncian tahun
+    // Cek penguncian tahun (hanya berlaku untuk non-admin)
     const activeTapel = await getActiveTapel();
-    if (item.tapel !== activeTapel) {
+    if (!req.user.isAdmin && item.tapel !== activeTapel) {
       return res.status(403).json({
         success: false,
         message: `Arsip Tahun Pelajaran '${item.tapel}' telah dikunci (Read-Only).`
@@ -423,9 +430,9 @@ router.delete('/:id', authenticateToken, checkLockedYear, async (req, res) => {
 
     const item = archives[0];
 
-    // Cek penguncian tahun
+    // Cek penguncian tahun (hanya berlaku untuk non-admin)
     const activeTapel = await getActiveTapel();
-    if (item.tapel !== activeTapel) {
+    if (!req.user.isAdmin && item.tapel !== activeTapel) {
       return res.status(403).json({
         success: false,
         message: `Arsip Tahun Pelajaran '${item.tapel}' telah dikunci (Read-Only).`
@@ -585,6 +592,155 @@ router.get('/download-zip', authenticateToken, async (req, res) => {
     console.error(`[Download ZIP Error]`, err);
     if (!res.headersSent) {
       return res.status(500).json({ success: false, message: 'Gagal membuat file ZIP.' });
+    }
+  }
+});
+
+/**
+ * POST /api/archives/bulk-delete
+ * Menghapus banyak berkas / folder sekaligus
+ */
+router.post('/bulk-delete', authenticateToken, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'Daftar ID arsip yang akan dihapus wajib disertakan.' });
+    }
+
+    const activeTapel = await getActiveTapel();
+    const [archives] = await pool.query('SELECT * FROM archives WHERE id IN (?)', [ids]);
+
+    if (archives.length === 0) {
+      return res.status(404).json({ success: false, message: 'Tidak ada arsip yang ditemukan.' });
+    }
+
+    let deletedCount = 0;
+    const deletedNames = [];
+
+    for (const item of archives) {
+      // Validasi hak akses
+      const normalizedJabatan = normalizeJabatanKey(item.jabatan);
+      const hasPermission = req.user.isAdmin || (req.user.access && req.user.access[normalizedJabatan]);
+      const isYearAllowed = req.user.isAdmin || item.tapel === activeTapel;
+
+      if (!hasPermission || !isYearAllowed) {
+        continue; // Lewati item yang tidak berizin
+      }
+
+      const cleanTapel = sanitizePathSegment(item.tapel);
+      const basePath = path.join(UPLOADS_BASE, cleanTapel);
+      let diskPath;
+      if (item.parent_path) {
+        const rel = item.parent_path.replace(/\\/g, '/').split('/').filter(Boolean).join(path.sep);
+        diskPath = path.join(basePath, rel, item.stored_name);
+      } else {
+        diskPath = path.join(basePath, item.stored_name);
+      }
+
+      // Hapus fisik
+      if (fs.existsSync(diskPath)) {
+        if (item.isFolder) {
+          fs.rmSync(diskPath, { recursive: true, force: true });
+        } else {
+          fs.unlinkSync(diskPath);
+        }
+      }
+
+      // Hapus dari DB
+      if (item.isFolder) {
+        const folderPathPrefix = item.parent_path ? `${item.parent_path}/${item.name}` : item.name;
+        await pool.query(
+          `DELETE FROM archives WHERE tapel = ? AND (parent_path = ? OR parent_path LIKE ?)`,
+          [item.tapel, folderPathPrefix, `${folderPathPrefix}/%`]
+        );
+      }
+
+      await pool.query('DELETE FROM archives WHERE id = ?', [item.id]);
+      deletedCount++;
+      deletedNames.push(item.name);
+    }
+
+    if (deletedCount > 0) {
+      await logActivity(
+        req,
+        'BULK_DELETE_ARCHIVE',
+        `Menghapus ${deletedCount} arsip massal: ${deletedNames.slice(0, 5).join(', ')}${deletedNames.length > 5 ? '...' : ''}`
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: `Berhasil menghapus ${deletedCount} arsip terpilih.`,
+      deletedCount
+    });
+
+  } catch (err) {
+    console.error(`[Bulk Delete Error]`, err);
+    return res.status(500).json({ success: false, message: 'Gagal melakukan penghapusan massal.' });
+  }
+});
+
+/**
+ * POST /api/archives/bulk-download
+ * Mengunduh beberapa berkas & folder yang dipilih dalam satu file ZIP
+ */
+router.post('/bulk-download', authenticateToken, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'Pilih minimal satu berkas/folder untuk diunduh.' });
+    }
+
+    const [archives] = await pool.query('SELECT * FROM archives WHERE id IN (?)', [ids]);
+    if (archives.length === 0) {
+      return res.status(404).json({ success: false, message: 'Berkas tidak ditemukan.' });
+    }
+
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', `attachment; filename="DAF_Arsip_Terpilih_${Date.now()}.zip"`);
+
+    const archive = archiver('zip', {
+      zlib: { level: 9 }
+    });
+
+    archive.on('error', function (err) {
+      console.error(`[Bulk Archiver Error]`, err);
+      if (!res.headersSent) {
+        res.status(500).send({ success: false, message: err.message });
+      }
+    });
+
+    archive.pipe(res);
+
+    for (const item of archives) {
+      const cleanTapel = sanitizePathSegment(item.tapel);
+      const basePath = path.join(UPLOADS_BASE, cleanTapel);
+      let diskPath;
+
+      if (item.parent_path) {
+        const rel = item.parent_path.replace(/\\/g, '/').split('/').filter(Boolean).join(path.sep);
+        diskPath = path.join(basePath, rel, item.stored_name);
+      } else {
+        diskPath = path.join(basePath, item.stored_name);
+      }
+
+      if (fs.existsSync(diskPath)) {
+        if (item.isFolder) {
+          archive.directory(diskPath, item.name);
+        } else {
+          archive.file(diskPath, { name: item.name || item.stored_name });
+        }
+      }
+    }
+
+    await archive.finalize();
+
+    await logActivity(req, 'BULK_DOWNLOAD_ZIP', `Mengunduh ${archives.length} berkas/folder terpilih sebagai ZIP.`);
+
+  } catch (err) {
+    console.error(`[Bulk Download Error]`, err);
+    if (!res.headersSent) {
+      return res.status(500).json({ success: false, message: 'Gagal membuat file ZIP download massal.' });
     }
   }
 });

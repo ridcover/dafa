@@ -89,9 +89,9 @@ export const FOLDER_SNP_HIERARCHY = [
  * Helper untuk mengecek apakah user memiliki hak Tulis (Upload, Buat Folder, Rename, Delete)
  */
 export function canUserWrite(user, folderJabatan, isLocked = false) {
-  if (isLocked) return false;
   if (!user) return false;
-  if (user.isAdmin) return true;
+  if (user.isAdmin) return true; // Administrator selalu memiliki hak kelola penuh di semua tahun
+  if (isLocked) return false;
   if (!user.access) return false;
 
   if (!folderJabatan) {

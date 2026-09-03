@@ -51,7 +51,10 @@ export default function FileList({
   onRename,
   onDelete,
   isLocked = false,
-  isLoading = false
+  isLoading = false,
+  selectedIds = [],
+  onToggleSelect = () => {},
+  onSelectAll = () => {}
 }) {
   if (isLoading) {
     return (
@@ -78,12 +81,26 @@ export default function FileList({
     );
   }
 
+  const isAllSelected = items.length > 0 && selectedIds.length === items.length;
+  const isIndeterminate = selectedIds.length > 0 && selectedIds.length < items.length;
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-700/60 glass-card">
       <table className="w-full text-left border-collapse text-xs">
         <thead>
           <tr className="border-b border-slate-700/80 bg-slate-900/60 text-slate-400 uppercase tracking-wider font-semibold text-[10px]">
-            <th className="py-3 px-4">Nama Berkas / Folder</th>
+            {/* Checkbox Select All */}
+            <th className="py-3 px-3 w-10 text-center">
+              <input
+                type="checkbox"
+                checked={isAllSelected}
+                ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
+                onChange={() => onSelectAll(isAllSelected ? [] : items.map((i) => i.id))}
+                className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900 cursor-pointer accent-emerald-500"
+                title="Pilih Semua Berkas & Folder"
+              />
+            </th>
+            <th className="py-3 px-3">Nama Berkas / Folder</th>
             <th className="py-3 px-3 hidden sm:table-cell">Jabatan</th>
             <th className="py-3 px-3 hidden md:table-cell">Pengunggah</th>
             <th className="py-3 px-3 hidden lg:table-cell">Ukuran</th>
@@ -93,8 +110,13 @@ export default function FileList({
         </thead>
         <tbody className="divide-y divide-slate-800/60">
           {items.map((item) => {
-            const isSelected = selectedItem?.id === item.id;
+            const isPreviewSelected = selectedItem?.id === item.id;
+            const isChecked = selectedIds.includes(item.id);
             const jabatanLabel = JABATAN_MAP[item.jabatan] || item.jabatan;
+
+            // Prioritaskan nama Auto-Name sebagai judul utama
+            const displayName = item.stored_name || item.name || item.original_name;
+            const originalName = item.original_name;
 
             return (
               <tr
@@ -107,24 +129,37 @@ export default function FileList({
                   }
                 }}
                 className={`transition-colors cursor-pointer group ${
-                  isSelected 
+                  isPreviewSelected 
                     ? 'bg-emerald-600/20 border-l-4 border-l-emerald-500 text-emerald-200' 
+                    : isChecked
+                    ? 'bg-emerald-950/30 border-l-4 border-l-emerald-600/60 text-slate-200'
                     : 'hover:bg-slate-800/50 text-slate-300'
                 }`}
               >
-                {/* Name & Icon */}
-                <td className="py-3 px-4 font-medium">
+                {/* Checkbox Row */}
+                <td className="py-3 px-3 w-10 text-center" onClick={(e) => e.stopPropagation()}>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => onToggleSelect(item.id)}
+                    className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900 cursor-pointer accent-emerald-500"
+                    title="Pilih item ini"
+                  />
+                </td>
+
+                {/* Name & Icon (Auto-Name as Primary) */}
+                <td className="py-3 px-3 font-medium">
                   <div className="flex items-center space-x-3 min-w-[200px]">
-                    <div className="p-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center">
+                    <div className="p-1.5 rounded-lg bg-slate-800/80 border border-slate-700/60 flex items-center justify-center flex-shrink-0">
                       {getFileIcon(item)}
                     </div>
-                    <div className="truncate max-w-[260px] md:max-w-xs xl:max-w-md">
-                      <div className="truncate font-semibold text-slate-100 group-hover:text-emerald-300 transition-colors">
-                        {item.original_name || item.name}
+                    <div className="truncate max-w-[240px] md:max-w-xs xl:max-w-md">
+                      <div className="truncate font-semibold text-slate-100 group-hover:text-emerald-300 transition-colors" title={displayName}>
+                        {displayName}
                       </div>
-                      {!item.isFolder && item.stored_name && item.stored_name !== item.original_name && (
-                        <div className="text-[10px] text-slate-400 truncate" title={item.stored_name}>
-                          Auto-Name: {item.stored_name}
+                      {!item.isFolder && originalName && originalName !== displayName && (
+                        <div className="text-[10px] text-slate-400 truncate mt-0.5" title={`Nama Asli: ${originalName}`}>
+                          Asli: <span className="text-slate-400 font-mono">{originalName}</span>
                         </div>
                       )}
                     </div>
@@ -174,7 +209,7 @@ export default function FileList({
                       <button
                         onClick={() => onSelectItem(item)}
                         className="p-1.5 rounded-lg bg-slate-800 hover:bg-emerald-600/30 text-slate-300 hover:text-emerald-300 transition-colors"
-                        title="Preview Berkas"
+                        title="Tampilkan Preview Berkas"
                       >
                         <Eye className="w-3.5 h-3.5" />
                       </button>

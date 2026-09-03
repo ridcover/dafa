@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Lock } from 'lucide-react';
+import { Lock, ShieldCheck, Download, Trash2, CheckSquare, X } from 'lucide-react';
 import Breadcrumb from '../components/Layout/Breadcrumb';
 import FileList from '../components/FileManager/FileList';
 import FilePreview from '../components/FileManager/FilePreview';
@@ -22,6 +22,11 @@ export default function Archives({ user, activeTapel, currentTapel }) {
   const [selectedItem, setSelectedItem] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
 
+  // Multi-selection state
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState('');
+
   // Modals state for Rename & Delete
   const [itemToRename, setItemToRename] = useState(null);
   const [itemToDelete, setItemToDelete] = useState(null);
@@ -42,6 +47,7 @@ export default function Archives({ user, activeTapel, currentTapel }) {
       });
       setItems(res.data.data || []);
       setIsLocked(res.data.isLocked || false);
+      setSelectedIds([]); // Reset selection on reload
     } catch (err) {
       console.error('Failed to load archives', err);
     } finally {
@@ -77,6 +83,7 @@ export default function Archives({ user, activeTapel, currentTapel }) {
     setSearchParams(newParams);
     setSearchQuery('');
     setSelectedItem(null);
+    setSelectedIds([]);
   };
 
   // Handle Open Folder
@@ -97,10 +104,65 @@ export default function Archives({ user, activeTapel, currentTapel }) {
     }
   };
 
+  // Handle Multi-Select Toggles
+  const handleToggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (ids) => {
+    setSelectedIds(ids);
+  };
+
+  // Handle Bulk Download ZIP
+  const handleBulkDownload = async () => {
+    if (selectedIds.length === 0) return;
+    try {
+      setIsBulkActionLoading(true);
+      const res = await api.post(
+        '/archives/bulk-download',
+        { ids: selectedIds },
+        { responseType: 'blob' }
+      );
+      
+      const blobUrl = window.URL.createObjectURL(new Blob([res.data], { type: 'application/zip' }));
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.setAttribute('download', `DAF_Arsip_Terpilih_${Date.now()}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      alert('Gagal mengunduh berkas terpilih.');
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
+  // Handle Bulk Delete
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Hapus ${selectedIds.length} berkas/folder terpilih secara permanen?`)) return;
+
+    try {
+      setIsBulkActionLoading(true);
+      const res = await api.post('/archives/bulk-delete', { ids: selectedIds });
+      setBulkMessage(res.data.message || 'Item terpilih berhasil dihapus.');
+      setTimeout(() => setBulkMessage(''), 3000);
+      fetchArchives();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Gagal menghapus berkas terpilih.');
+    } finally {
+      setIsBulkActionLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Read-Only Banner if Locked */}
-      {isLocked && (
+      {/* Banner Tahun Ajaran */}
+      {isLocked && !user?.isAdmin ? (
         <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs shadow-lg space-y-1.5 animate-fade-in">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2.5 font-bold text-amber-300">
@@ -115,7 +177,17 @@ export default function Archives({ user, activeTapel, currentTapel }) {
             Anda sedang melihat arsip <strong>Tahun Pelajaran {currentTapel || activeTapel}</strong> yang berstatus <strong>Read-Only</strong> (berkas hanya dapat dilihat dan diunduh). Setiap tanggal <strong>01 Juli adalah awal dari tahun ajaran baru</strong> sehingga sistem secara otomatis mengunci (Read-Only) seluruh arsip tahun pelajaran sebelumnya guna menjamin integritas dan keutuhan data dokumen sekolah.
           </p>
         </div>
-      )}
+      ) : isLocked && user?.isAdmin ? (
+        <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 text-xs shadow-lg flex items-center justify-between animate-fade-in">
+          <div className="flex items-center space-x-2.5 font-bold text-emerald-300">
+            <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+            <span>Tahun Pelajaran Lampau ({currentTapel || activeTapel}) - Mode Administrator (Akses Penuh Kelola Berkas & Folder)</span>
+          </div>
+          <span className="text-[10px] bg-emerald-500/30 text-emerald-300 px-2.5 py-0.5 rounded-lg font-bold uppercase tracking-wider">
+            Admin Mode
+          </span>
+        </div>
+      ) : null}
 
       {/* Top Header & Breadcrumb */}
       <div className="glass-card rounded-2xl p-4 border border-slate-700/60 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
@@ -145,7 +217,7 @@ export default function Archives({ user, activeTapel, currentTapel }) {
           currentTapel={currentTapel || activeTapel}
           parentPath={parentPath}
           currentJabatan={currentJabatan}
-          isLocked={isLocked}
+          isLocked={isLocked && !user?.isAdmin}
           searchQuery={searchQuery}
           onSearchChange={handleSearchChange}
           onRefresh={fetchArchives}
@@ -155,6 +227,52 @@ export default function Archives({ user, activeTapel, currentTapel }) {
           onCloseDelete={() => setItemToDelete(null)}
         />
       </div>
+
+      {/* BULK ACTION FLOATING BAR (Ketik Item Dipilih) */}
+      {selectedIds.length > 0 && (
+        <div className="p-3.5 rounded-2xl bg-emerald-950/90 border border-emerald-500/40 text-emerald-100 flex flex-wrap items-center justify-between gap-3 shadow-2xl animate-fade-in">
+          <div className="flex items-center space-x-2 font-bold text-xs">
+            <CheckSquare className="w-4 h-4 text-emerald-400" />
+            <span>{selectedIds.length} berkas/folder dipilih</span>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <button
+              disabled={isBulkActionLoading}
+              onClick={handleBulkDownload}
+              className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow transition-all"
+            >
+              <Download className="w-3.5 h-3.5" />
+              <span>Unduh Terpilih (ZIP)</span>
+            </button>
+
+            {(user?.isAdmin || (!isLocked && currentJabatan && user?.access?.[currentJabatan])) && (
+              <button
+                disabled={isBulkActionLoading}
+                onClick={handleBulkDelete}
+                className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus Terpilih</span>
+              </button>
+            )}
+
+            <button
+              onClick={() => setSelectedIds([])}
+              className="p-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition-colors text-xs"
+              title="Batalkan pilihan"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {bulkMessage && (
+        <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 text-xs font-semibold">
+          {bulkMessage}
+        </div>
+      )}
 
       {/* SPLIT VIEW: File List on Left, Interactive Preview on Right */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
@@ -169,8 +287,11 @@ export default function Archives({ user, activeTapel, currentTapel }) {
             onDownload={handleDownload}
             onRename={(item) => setItemToRename(item)}
             onDelete={(item) => setItemToDelete(item)}
-            isLocked={isLocked}
+            isLocked={isLocked && !user?.isAdmin}
             isLoading={loading}
+            selectedIds={selectedIds}
+            onToggleSelect={handleToggleSelect}
+            onSelectAll={handleSelectAll}
           />
         </div>
 

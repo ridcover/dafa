@@ -63,13 +63,21 @@ router.get('/:id', authenticateToken, async (req, res) => {
     res.setHeader('Content-Type', contentType);
     res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(item.original_name || item.name)}"`);
 
-    // Stream file
+    // Stream file with error handling
     const stream = fs.createReadStream(filePath);
+    stream.on('error', (streamErr) => {
+      console.error('[Preview Stream Error]', streamErr);
+      if (!res.headersSent) {
+        res.status(500).json({ success: false, message: 'Gagal membaca berkas fisik saat streaming.' });
+      }
+    });
     stream.pipe(res);
 
   } catch (err) {
     console.error(`[Preview File Error]`, err);
-    return res.status(500).json({ success: false, message: 'Gagal memuat preview berkas.' });
+    if (!res.headersSent) {
+      return res.status(500).json({ success: false, message: 'Gagal memuat preview berkas.' });
+    }
   }
 });
 

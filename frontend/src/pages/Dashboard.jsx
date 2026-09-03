@@ -237,7 +237,7 @@ export default function Dashboard({ user, activeTapel, currentTapel }) {
                         }`}
                       >
                         <td className="py-3 px-4 font-semibold text-slate-100">
-                          <div className="truncate max-w-[200px] sm:max-w-xs">{file.original_name || file.name}</div>
+                          <div className="truncate max-w-[200px] sm:max-w-xs">{file.stored_name || file.name || file.original_name}</div>
                         </td>
                         <td className="py-3 px-3">
                           <span className="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-300">

@@ -8,9 +8,9 @@ const UPLOADS_BASE = path.join(__dirname, '../../uploads');
 // Konfigurasi Disk Storage Dinamis
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const tapel = req.body.tapel || 'default';
-    const parentPath = req.body.parent_path || '';
-    const jabatan = req.body.jabatan || 'umum';
+    const tapel = req.body.tapel || req.query.tapel || 'default';
+    const parentPath = req.body.parent_path || req.query.parent_path || '';
+    const jabatan = req.body.jabatan || req.query.jabatan || 'umum';
 
     const cleanTapel = sanitizePathSegment(tapel);
     
@@ -44,7 +44,7 @@ const storage = multer.diskStorage({
     }
 
     // Tentukan jabatan yang digunakan untuk penamaan
-    const jabatanKey = req.body.jabatan || 'guru';
+    const jabatanKey = req.body.jabatan || req.query.jabatan || 'guru';
     const userName = (req.user && req.user.nama) ? req.user.nama : 'User';
 
     // Format: {Jabatan}_{NamaUser}_{NamaFileAsli}

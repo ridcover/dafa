@@ -5054,5 +5054,136 @@
     "file": "backend/.env",
     "mtime": "1788441575.59981",
     "toc": []
+  },
+  "reader_36c4a68f87f4f8b0e93c4904cda06517": {
+    "file": "backend/src/routes/preview.js",
+    "mtime": "1788441578.3386948",
+    "toc": []
+  },
+  "reader_cc38baa2b13edd06c3a87eda389814b8": {
+    "file": "backend/src/routes/archives.js",
+    "mtime": "1788441578.3386948",
+    "toc": [
+      {
+        "line": 16,
+        "type": "Function",
+        "name": "getActiveTapel"
+      }
+    ]
+  },
+  "reader_bed8ab3171ef3333dd3503820d46d2e6": {
+    "file": "backend/src/config/multer.js",
+    "mtime": "1788441578.3386948",
+    "toc": [
+      {
+        "line": 62,
+        "type": "Arrow Function",
+        "name": "fileFilter(req, file, cb)"
+      }
+    ]
+  },
+  "reader_02b26c83ba9ca8077d7aa10525bb9bfc": {
+    "file": "backend/src/middleware/auth.js",
+    "mtime": "1788441578.3386948",
+    "toc": [
+      {
+        "line": 9,
+        "type": "Function",
+        "name": "authenticateToken"
+      },
+      {
+        "line": 82,
+        "type": "Function",
+        "name": "requireAdmin"
+      },
+      {
+        "line": 96,
+        "type": "Function",
+        "name": "authorizeJabatan"
+      },
+      {
+        "line": 127,
+        "type": "Function",
+        "name": "checkLockedYear"
+      }
+    ]
+  },
+  "reader_14b86700f78da12ce5ce4d0952462ac1": {
+    "file": "backend/src/routes/auth.js",
+    "mtime": "1788441578.3386948",
+    "toc": []
+  },
+  "reader_0dda0257554de93c1e0c04c1e6369d7e": {
+    "file": "backend/src/routes/users.js",
+    "mtime": "1788441578.3468552",
+    "toc": []
+  },
+  "reader_d927b473dff9b9d82f626772d7bf1903": {
+    "file": "backend/src/routes/settings.js",
+    "mtime": "1788441578.3386948",
+    "toc": []
+  },
+  "reader_4bf3ce912bfd5fa3ef5b8bddddb12ea3": {
+    "file": "backend/src/utils/folderGenerator.js",
+    "mtime": "1788441578.347201",
+    "toc": [
+      {
+        "line": 19,
+        "type": "Function",
+        "name": "normalizeJabatanKey"
+      },
+      {
+        "line": 33,
+        "type": "Function",
+        "name": "generateSNPStructure"
+      }
+    ]
+  },
+  "reader_9719b53d1d8d51ebf9aa73855ef11600": {
+    "file": "backend/src/utils/fileNaming.js",
+    "mtime": "1788441578.347201",
+    "toc": [
+      {
+        "line": 18,
+        "type": "Function",
+        "name": "generateStoredFileName"
+      },
+      {
+        "line": 43,
+        "type": "Function",
+        "name": "sanitizePathSegment"
+      }
+    ]
+  },
+  "reader_4a96167077b8967804e7bdda437d5dc6": {
+    "file": "backend/src/utils/academicYearAuto.js",
+    "mtime": "1788441578.347201",
+    "toc": [
+      {
+        "line": 10,
+        "type": "Function",
+        "name": "getCalculatedAcademicYear"
+      },
+      {
+        "line": 24,
+        "type": "Function",
+        "name": "getNextTransitionInfo"
+      },
+      {
+        "line": 45,
+        "type": "Function",
+        "name": "checkAndSyncAcademicYear"
+      }
+    ]
+  },
+  "reader_5f23e2dd3994c8bcb5fa7748c8e1dbaf": {
+    "file": "backend/src/server.js",
+    "mtime": "1788441578.347201",
+    "toc": []
+  },
+  "reader_ae5cae41603c7122b95b504f900e7cf6": {
+    "file": "backend/src/routes/audit.js",
+    "mtime": "1788441578.3386948",
+    "toc": []
   }
 }
