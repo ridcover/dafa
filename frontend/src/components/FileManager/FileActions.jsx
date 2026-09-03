@@ -209,8 +209,10 @@ export default function FileActions({
 
   // Unduh Seluruh Folder (ZIP)
   const handleDownloadZip = () => {
+    const token = localStorage.getItem('token') || '';
+    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : '';
     const folderName = parentPath ? parentPath.split('/').pop() : `Semua_Arsip_${currentTapel}`;
-    const url = `/api/archives/download-zip?tapel=${encodeURIComponent(currentTapel)}&parent_path=${encodeURIComponent(parentPath || '')}&name=${encodeURIComponent(folderName)}`;
+    const url = `/api/archives/download-zip?tapel=${encodeURIComponent(currentTapel)}&parent_path=${encodeURIComponent(parentPath || '')}&name=${encodeURIComponent(folderName)}${tokenParam}`;
     window.location.href = url;
   };
 

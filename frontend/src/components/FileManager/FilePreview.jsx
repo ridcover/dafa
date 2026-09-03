@@ -29,7 +29,8 @@ export default function FilePreview({ item, onClose, onDownload }) {
   const [imgRotation, setImgRotation] = useState(0);
 
   const fileType = item ? getFileType(item.original_name || item.name) : 'unknown';
-  const previewUrl = item ? `/api/preview/${item.id}` : '';
+  const token = localStorage.getItem('token') || '';
+  const previewUrl = item ? `/api/preview/${item.id}${token ? '?token=' + encodeURIComponent(token) : ''}` : '';
 
   useEffect(() => {
     setImgZoom(1);

@@ -96,11 +96,13 @@ export default function Archives({ user, activeTapel, currentTapel }) {
 
   // Handle Download File or ZIP
   const handleDownload = (item) => {
+    const token = localStorage.getItem('token') || '';
+    const tokenParam = token ? `&token=${encodeURIComponent(token)}` : '';
     if (item.isFolder) {
       const folderPath = item.parent_path ? `${item.parent_path}/${item.name}` : item.name;
-      window.location.href = `/api/archives/download-zip?tapel=${encodeURIComponent(currentTapel || activeTapel)}&parent_path=${encodeURIComponent(folderPath)}&name=${encodeURIComponent(item.name)}`;
+      window.location.href = `/api/archives/download-zip?tapel=${encodeURIComponent(currentTapel || activeTapel)}&parent_path=${encodeURIComponent(folderPath)}&name=${encodeURIComponent(item.name)}${tokenParam}`;
     } else {
-      window.location.href = `/api/archives/${item.id}/download`;
+      window.location.href = `/api/archives/${item.id}/download${token ? '?token=' + encodeURIComponent(token) : ''}`;
     }
   };
 

@@ -279,7 +279,8 @@ export default function Dashboard({ user, activeTapel, currentTapel }) {
                 item={previewItem}
                 onClose={() => setPreviewItem(null)}
                 onDownload={(file) => {
-                  window.location.href = `/api/archives/${file.id}/download`;
+                  const token = localStorage.getItem('token') || '';
+                  window.location.href = `/api/archives/${file.id}/download${token ? '?token=' + encodeURIComponent(token) : ''}`;
                 }}
               />
             </div>
