@@ -128,6 +128,22 @@ async function testConnection() {
           await connection.query(`ALTER TABLE client_access ADD COLUMN \`${col}\` TINYINT(1) DEFAULT 0`);
         }
       }
+
+      // Pastikan kolom-kolom di tabel archives lengkap
+      try {
+        const [archCols] = await connection.query(`SHOW COLUMNS FROM archives`);
+        const existingArchCols = archCols.map(c => c.Field);
+        if (!existingArchCols.includes('isFolder')) await connection.query(`ALTER TABLE archives ADD COLUMN isFolder TINYINT(1) DEFAULT 0`);
+        if (!existingArchCols.includes('stored_name')) await connection.query(`ALTER TABLE archives ADD COLUMN stored_name VARCHAR(255) DEFAULT ''`);
+        if (!existingArchCols.includes('original_name')) await connection.query(`ALTER TABLE archives ADD COLUMN original_name VARCHAR(255) DEFAULT ''`);
+        if (!existingArchCols.includes('size')) await connection.query(`ALTER TABLE archives ADD COLUMN size INT DEFAULT 0`);
+        if (!existingArchCols.includes('tapel')) await connection.query(`ALTER TABLE archives ADD COLUMN tapel VARCHAR(50) DEFAULT '2026/2027'`);
+        if (!existingArchCols.includes('jabatan')) await connection.query(`ALTER TABLE archives ADD COLUMN jabatan VARCHAR(100) DEFAULT 'guru'`);
+        if (!existingArchCols.includes('parent_path')) await connection.query(`ALTER TABLE archives ADD COLUMN parent_path TEXT`);
+        if (!existingArchCols.includes('user_id')) await connection.query(`ALTER TABLE archives ADD COLUMN user_id INT DEFAULT NULL`);
+        if (!existingArchCols.includes('created_at')) await connection.query(`ALTER TABLE archives ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+        if (!existingArchCols.includes('updated_at')) await connection.query(`ALTER TABLE archives ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`);
+      } catch (aErr) {}
     } catch (migErr) {
       console.warn(`[Database Auto-Migration Warning]`, migErr.message);
     }
