@@ -62,6 +62,14 @@ async function testConnection() {
       console.warn(`[Database Password Auto-Fix Warning]`, pwdErr.message);
     }
 
+    // Auto-sync: otomatis daftarkan folder & berkas fisik uploads ke tabel archives
+    try {
+      const { syncPhysicalUploadsToDb } = require('../utils/syncUploads');
+      await syncPhysicalUploadsToDb();
+    } catch (syncErr) {
+      console.warn(`[Database Storage Sync Notice]`, syncErr.message);
+    }
+
     connection.release();
     return true;
   } catch (err) {
