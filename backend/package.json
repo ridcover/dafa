@@ -1,0 +1,33 @@
+{
+  "name": "daf-archive-backend",
+  "version": "1.0.0",
+  "description": "Backend API untuk Sistem Penyimpanan Arsip Digital Terpusat (DAF Archive) SMK Diponegoro Cipari",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "init-db": "node src/scripts/initDb.js"
+  },
+  "keywords": [
+    "archive",
+    "smk-diponegoro-cipari",
+    "express",
+    "mysql",
+    "rbac",
+    "snp"
+  ],
+  "author": "SMK Diponegoro Cipari",
+  "license": "ISC",
+  "dependencies": {
+    "archiver": "^7.0.1",
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "mysql2": "^3.10.1"
+  }
+}

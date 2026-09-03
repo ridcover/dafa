@@ -1,0 +1,22 @@
+{
+  "name": "daf-archive-system",
+  "version": "1.0.0",
+  "description": "Sistem Penyimpanan Arsip Digital Terpusat (DAF Archive) SMK Diponegoro Cipari",
+  "scripts": {
+    "dev": "node dev.js",
+    "start": "node dev.js",
+    "backend": "npm --prefix backend start",
+    "frontend": "npm --prefix frontend run dev",
+    "init-db": "npm --prefix backend run init-db",
+    "build": "npm --prefix frontend run build"
+  },
+  "keywords": [
+    "daf-archive",
+    "smk-diponegoro-cipari",
+    "react",
+    "express",
+    "mysql"
+  ],
+  "author": "SMK Diponegoro Cipari",
+  "license": "ISC"
+}
