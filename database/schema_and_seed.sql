@@ -87,34 +87,34 @@ CREATE TABLE `audit_logs` (
 -- =======================================================================
 -- SEED DATA
 -- Default Password untuk semua akun: smk12345
--- Hash: $2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm
+-- Hash: $2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC
 -- =======================================================================
 
 -- Seed Admin User
 INSERT INTO `users` (`id`, `nama`, `username`, `password`, `role`) VALUES
-(1, 'Administrator DAF Archive', 'admin', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'admin');
+(1, 'Administrator DAF Archive', 'admin', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'admin');
 
 -- Seed 19 Guru & Staf SMK Diponegoro Cipari
 INSERT INTO `users` (`id`, `nama`, `username`, `password`, `role`) VALUES
-(2, 'Lestari Kurniawati, S.Pd.', 'lestari', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(3, 'Santi Setiawan, S.Pd.', 'santi', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(4, 'Muniroh, S.Pd.', 'muniroh', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(5, 'Abdul Haris, S.Pd.', 'abdulharis', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(6, 'Rizki Fauzi', 'rizki', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(7, 'Budi Yani Zahara, S.Sos.I.', 'budiyani', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(8, 'Erlin Holinah, S.Pd.', 'erlin', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(9, 'Hilmi Haidar Ali, S.Kom.', 'hilmi', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(10, 'Usman Aziz, S.Kom.', 'usman', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(11, 'Siti Latifah, S.Pd.', 'sitilatifah', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(12, 'Fitri Handayani, S.Pd.I.', 'fitrihandayani', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(13, 'Muhamad Ridwan', 'muhamadridwan', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(14, 'Khusnul Mubin, S.Pd.', 'khusnulmubin', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(15, 'Febriana Eka Nur Azizah', 'febriana', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(16, 'Fitri Nur Elvi Handayani, S.Pd.', 'fitrinur', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(17, 'Rita Nofita, S.Pd., M.Pd.', 'ritanofita', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(18, 'Indra Karimah, S.Kom.', 'indrakarimah', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(19, 'Nafisah, S.Pd.', 'nafisah', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client'),
-(20, 'Jihanisme Difanti, S.Kom.', 'jihanisme', '$2a$10$znreDwkqpRV1qBapM2IV8evjV.eCL37NrrMhsU3oegtIfKbH37ufm', 'client');
+(2, 'Lestari Kurniawati, S.Pd.', 'lestari', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(3, 'Santi Setiawan, S.Pd.', 'santi', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(4, 'Muniroh, S.Pd.', 'muniroh', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(5, 'Abdul Haris, S.Pd.', 'abdulharis', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(6, 'Rizki Fauzi', 'rizki', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(7, 'Budi Yani Zahara, S.Sos.I.', 'budiyani', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(8, 'Erlin Holinah, S.Pd.', 'erlin', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(9, 'Hilmi Haidar Ali, S.Kom.', 'hilmi', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(10, 'Usman Aziz, S.Kom.', 'usman', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(11, 'Siti Latifah, S.Pd.', 'sitilatifah', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(12, 'Fitri Handayani, S.Pd.I.', 'fitrihandayani', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(13, 'Muhamad Ridwan', 'muhamadridwan', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(14, 'Khusnul Mubin, S.Pd.', 'khusnulmubin', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(15, 'Febriana Eka Nur Azizah', 'febriana', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(16, 'Fitri Nur Elvi Handayani, S.Pd.', 'fitrinur', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(17, 'Rita Nofita, S.Pd., M.Pd.', 'ritanofita', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(18, 'Indra Karimah, S.Kom.', 'indrakarimah', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(19, 'Nafisah, S.Pd.', 'nafisah', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client'),
+(20, 'Jihanisme Difanti, S.Kom.', 'jihanisme', '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC', 'client');
 
 -- Seed Client Access (RBAC Multi-Role 7 Jabatan)
 INSERT INTO `client_access` (`user_id`, `kepsek`, `waka_kurikulum`, `waka_kesiswaan`, `waka_sarpras`, `bendahara`, `tu`, `guru`) VALUES

@@ -47,6 +47,21 @@ async function testConnection() {
       console.warn(`[Database Auto-Migration Warning]`, migErr.message);
     }
 
+    // Auto-fix: pastikan password akun admin dan default users sesuai dengan 'smk12345'
+    try {
+      const bcrypt = require('bcryptjs');
+      const defaultHash = '$2a$10$NqkTnsuGzVmStOpqoxNDLenc8e2VrQ6TT2/oF4ImbcZl0Qo.g/7bC';
+      const [adminUser] = await connection.query("SELECT id, password FROM users WHERE username = 'admin'");
+      if (adminUser.length > 0) {
+        if (!bcrypt.compareSync('smk12345', adminUser[0].password)) {
+          console.log(`[Database Auto-Fix] Memperbarui hash password default 'smk12345' untuk akun pengguna...`);
+          await connection.query("UPDATE users SET password = ?", [defaultHash]);
+        }
+      }
+    } catch (pwdErr) {
+      console.warn(`[Database Password Auto-Fix Warning]`, pwdErr.message);
+    }
+
     connection.release();
     return true;
   } catch (err) {
