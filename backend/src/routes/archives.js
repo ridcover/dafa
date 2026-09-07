@@ -8,7 +8,44 @@ const { upload, UPLOADS_BASE } = require('../config/multer');
 const { authenticateToken, checkLockedYear } = require('../middleware/auth');
 const { sanitizePathSegment, JABATAN_LABELS } = require('../utils/fileNaming');
 const { logActivity } = require('../utils/auditLogger');
-const { normalizeJabatanKey } = require('../utils/folderGenerator');
+const { normalizeJabatanKey, SNP_STRUCTURE } = require('../utils/folderGenerator');
+
+const ALL_SNP_FOLDER_NAMES = [
+  'Standar Pengelolaan (P)',
+  'Standar Isi (SI)',
+  'Standar Proses (SP)',
+  'Standar Lulusan (SKL)',
+  'Standar Sarpras (SAP)',
+  'Standar Pembiayaan (PB)',
+  'Standar PTK',
+  'Standar Penilaian (PN)'
+];
+
+/**
+ * Memeriksa apakah suatu item arsip adalah Folder Utama SNP yang terotomatisasi
+ * (Level 0 root jabatan seperti 'kepsek', 'waka_kurikulum', atau Level 1 subfolder SNP standar)
+ */
+function isAutomatedMainFolder(item) {
+  if (!item || (!item.isFolder && item.isFolder !== 1)) return false;
+  // Level 0: Folder root jabatan (parent_path kosong atau null)
+  if (!item.parent_path || item.parent_path.trim() === '') return true;
+
+  const cleanParent = item.parent_path.replace(/\\/g, '/').trim();
+  // Level 1: Subfolder terotomatisasi yang terdaftar di SNP_STRUCTURE
+  const isSnpSubfolder = SNP_STRUCTURE.some(s => 
+    s.jabatan === item.jabatan && 
+    cleanParent === s.jabatan && 
+    s.folders.includes(item.name)
+  );
+  if (isSnpSubfolder) return true;
+
+  // Level 1 umum: tepat di bawah root jabatan tanpa slash bersarang dan bernama standar SNP
+  if (!cleanParent.includes('/') && ALL_SNP_FOLDER_NAMES.includes(item.name)) {
+    return true;
+  }
+
+  return false;
+}
 
 /**
  * Helper: Ambil tahun pelajaran aktif
@@ -77,9 +114,14 @@ router.get('/', authenticateToken, async (req, res) => {
 
     const [rows] = await pool.query(query, params);
 
+    const enrichedRows = rows.map(r => ({
+      ...r,
+      isMainFolder: Boolean(isAutomatedMainFolder(r))
+    }));
+
     return res.json({
       success: true,
-      data: rows,
+      data: enrichedRows,
       isLocked: isLocked,
       activeTapel: activeTapel,
       currentTapel: tapel,
@@ -399,6 +441,14 @@ router.put('/:id/rename', authenticateToken, checkLockedYear, async (req, res) =
       return res.status(403).json({ success: false, message: 'Akses ditolak.' });
     }
 
+    // Cegah pengubahan nama folder utama otomatis SNP oleh non-admin
+    if (!req.user.isAdmin && isAutomatedMainFolder(item)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses Ditolak: Folder utama standar SNP yang terotomatisasi dilindungi dan tidak dapat diubah namanya oleh non-admin.'
+      });
+    }
+
     const cleanTapel = sanitizePathSegment(item.tapel);
     const basePath = path.join(UPLOADS_BASE, cleanTapel);
 
@@ -483,6 +533,14 @@ router.delete('/:id', authenticateToken, checkLockedYear, async (req, res) => {
     const normalizedJabatan = normalizeJabatanKey(item.jabatan);
     if (!req.user.isAdmin && !req.user.access[normalizedJabatan]) {
       return res.status(403).json({ success: false, message: 'Akses ditolak.' });
+    }
+
+    // Cegah penghapusan folder utama otomatis SNP oleh non-admin
+    if (!req.user.isAdmin && isAutomatedMainFolder(item)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses Ditolak: Folder utama standar SNP yang terotomatisasi dilindungi dan tidak dapat dihapus oleh non-admin.'
+      });
     }
 
     const cleanTapel = sanitizePathSegment(item.tapel);
@@ -667,6 +725,11 @@ router.post('/bulk-delete', authenticateToken, async (req, res) => {
         continue; // Lewati item yang tidak berizin
       }
 
+      // Non-admin tidak boleh menghapus folder utama otomatis SNP
+      if (!req.user.isAdmin && isAutomatedMainFolder(item)) {
+        continue;
+      }
+
       const cleanTapel = sanitizePathSegment(item.tapel);
       const basePath = path.join(UPLOADS_BASE, cleanTapel);
       let diskPath;
@@ -706,6 +769,13 @@ router.post('/bulk-delete', authenticateToken, async (req, res) => {
         'BULK_DELETE_ARCHIVE',
         `Menghapus ${deletedCount} arsip massal: ${deletedNames.slice(0, 5).join(', ')}${deletedNames.length > 5 ? '...' : ''}`
       );
+    }
+
+    if (deletedCount === 0 && archives.length > 0) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses Ditolak: Seluruh berkas/folder yang dipilih dilindungi atau berada di luar izin Anda.'
+      });
     }
 
     return res.json({

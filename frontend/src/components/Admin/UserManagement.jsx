@@ -132,9 +132,18 @@ export default function UserManagement() {
     <div className="space-y-4">
       {/* Alert Messages */}
       {error && (
-        <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+        <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <span>{error}</span>
-          <button onClick={() => setError('')}><X className="w-4 h-4" /></button>
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={fetchUsers}
+              className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold transition-colors cursor-pointer"
+            >
+              Coba Muat Ulang
+            </button>
+            <button type="button" onClick={() => setError('')}><X className="w-4 h-4 text-rose-300" /></button>
+          </div>
         </div>
       )}
       {success && (

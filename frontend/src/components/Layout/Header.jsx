@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   FolderLock, 
   LogOut, 
@@ -27,6 +27,22 @@ export default function Header({
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [isChangingPwd, setIsChangingPwd] = useState(false);
+  const profileMenuRef = useRef(null);
+
+  // Close profile dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    }
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileMenu]);
 
   const isLockedYear = currentTapel && activeTapel && currentTapel !== activeTapel;
 
@@ -142,22 +158,22 @@ export default function Header({
             {/* Dropdown Menu */}
             {showProfileMenu && (
               <div 
-                className="absolute right-0 mt-2 w-64 glass-card rounded-xl p-2 z-50 animate-fade-in divide-y divide-slate-700/50 border border-slate-700/80 shadow-2xl"
-                onClick={() => setShowProfileMenu(false)}
+                ref={profileMenuRef}
+                className="absolute right-0 mt-2 w-64 bg-slate-900 border border-slate-700/90 rounded-2xl p-2 z-50 animate-fade-in divide-y divide-slate-800 shadow-2xl shadow-black/80"
               >
-                <div className="px-3 py-2.5">
-                  <p className="text-xs text-slate-400">Masuk sebagai:</p>
-                  <p className="text-sm font-bold text-slate-100 truncate">{user?.nama}</p>
+                <div className="px-3 py-2.5 bg-slate-950/40 rounded-xl mb-1">
+                  <p className="text-[11px] text-slate-400">Masuk sebagai:</p>
+                  <p className="text-sm font-bold text-white truncate">{user?.nama}</p>
                   <div className="flex flex-wrap gap-1 mt-1.5">
                     {user?.isAdmin ? (
-                      <span className="text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30">
+                      <span className="text-[10px] font-semibold bg-red-500/25 text-red-300 px-2 py-0.5 rounded border border-red-500/40">
                         Admin Utama
                       </span>
                     ) : (
                       Object.keys(user?.access || {})
                         .filter(k => user.access[k])
                         .map(k => (
-                          <span key={k} className="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30 capitalize">
+                          <span key={k} className="text-[10px] font-semibold bg-emerald-500/25 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/40 capitalize">
                             {k.replace('_', ' ')}
                           </span>
                         ))
@@ -167,20 +183,28 @@ export default function Header({
 
                 <div className="py-1">
                   <button
+                    type="button"
                     onClick={() => { setShowProfileMenu(false); setShowPasswordModal(true); }}
-                    className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs text-slate-200 hover:bg-slate-700/60 rounded-lg transition-colors text-left"
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 hover:text-white rounded-xl transition-colors text-left cursor-pointer"
                   >
-                    <KeyRound className="w-4 h-4 text-teal-400" />
+                    <KeyRound className="w-4 h-4 text-teal-400 flex-shrink-0" />
                     <span>Ubah Kata Sandi</span>
                   </button>
                 </div>
 
                 <div className="py-1">
                   <button
-                    onClick={onLogout}
-                    className="w-full flex items-center space-x-2.5 px-3 py-2 text-xs text-rose-400 hover:bg-rose-500/20 rounded-lg transition-colors text-left"
+                    type="button"
+                    id="btn-logout"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setShowProfileMenu(false);
+                      if (onLogout) onLogout();
+                    }}
+                    className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/20 active:bg-rose-500/30 rounded-xl transition-colors text-left cursor-pointer"
                   >
-                    <LogOut className="w-4 h-4 text-rose-400" />
+                    <LogOut className="w-4 h-4 text-rose-400 flex-shrink-0" />
                     <span>Keluar (Logout)</span>
                   </button>
                 </div>

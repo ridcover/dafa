@@ -14,9 +14,9 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Tapel state
-  const [activeTapel, setActiveTapel] = useState('2026/2027');
-  const [currentTapel, setCurrentTapel] = useState('2026/2027');
+  // Tapel state (Persisten di localStorage saat reload)
+  const [activeTapel, setActiveTapel] = useState(() => localStorage.getItem('activeTapel') || '2026/2027');
+  const [currentTapel, setCurrentTapel] = useState(() => localStorage.getItem('currentTapel') || '2026/2027');
   const [allTapelList, setAllTapelList] = useState(['2024/2025', '2025/2026', '2026/2027']);
 
   const navigate = useNavigate();
@@ -32,7 +32,20 @@ export default function App() {
         }
       } catch (err) {
         console.warn('Session verification notice:', err.message);
-        setUser(null);
+        // Hanya hapus sesi jika secara eksplisit ditolak 401/403
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        } else {
+          // Jika hanya kendala jaringan/server sesaat, pertahankan user dari localStorage
+          const cachedUser = authService.getUser();
+          if (cachedUser) {
+            setUser(cachedUser);
+          } else {
+            setUser(null);
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -47,9 +60,14 @@ export default function App() {
       if (user) {
         const res = await api.get('/settings/tahun-akademik');
         setAllTapelList(res.data.years || ['2026/2027']);
-        setActiveTapel(res.data.activeTahun || '2026/2027');
-        if (!currentTapel) {
-          setCurrentTapel(res.data.activeTahun || '2026/2027');
+        const backendActive = res.data.activeTahun || '2026/2027';
+        setActiveTapel(backendActive);
+        localStorage.setItem('activeTapel', backendActive);
+
+        const savedCurrent = localStorage.getItem('currentTapel');
+        if (!savedCurrent) {
+          setCurrentTapel(backendActive);
+          localStorage.setItem('currentTapel', backendActive);
         }
       }
     } catch (e) {
@@ -63,15 +81,25 @@ export default function App() {
     }
   }, [user]);
 
+  const handleSelectTapel = (t) => {
+    setCurrentTapel(t);
+    localStorage.setItem('currentTapel', t);
+  };
+
   const handleLoginSuccess = (userData) => {
     setUser(userData);
     navigate('/');
   };
 
   const handleLogout = async () => {
-    await authService.logout();
-    setUser(null);
-    navigate('/login');
+    try {
+      await authService.logout();
+    } catch (e) {
+      console.warn('Logout notice:', e);
+    } finally {
+      setUser(null);
+      navigate('/login');
+    }
   };
 
   const handleNavigateFolder = (jabatan) => {
@@ -120,7 +148,7 @@ export default function App() {
             onLogout={handleLogout}
             activeTapel={activeTapel}
             currentTapel={currentTapel}
-            onSelectTapel={(t) => setCurrentTapel(t)}
+            onSelectTapel={handleSelectTapel}
             allTapelList={allTapelList}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />
@@ -157,6 +185,8 @@ export default function App() {
                       onActiveYearChanged={(newTapel) => {
                         setActiveTapel(newTapel);
                         setCurrentTapel(newTapel);
+                        localStorage.setItem('activeTapel', newTapel);
+                        localStorage.setItem('currentTapel', newTapel);
                         fetchSettings();
                       }}
                     />

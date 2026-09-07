@@ -17,7 +17,7 @@ import {
   Lock,
   ArrowRight
 } from 'lucide-react';
-import { formatBytes, formatDate, getFileType, JABATAN_MAP, canUserWrite } from '../../utils/constants';
+import { formatBytes, formatDate, getFileType, JABATAN_MAP, canUserWrite, isAutomatedMainFolder } from '../../utils/constants';
 
 function getFileIcon(item) {
   if (item.isFolder) {
@@ -81,8 +81,9 @@ export default function FileList({
     );
   }
 
-  const isAllSelected = items.length > 0 && selectedIds.length === items.length;
-  const isIndeterminate = selectedIds.length > 0 && selectedIds.length < items.length;
+  const selectableItems = user?.isAdmin ? items : items.filter((i) => !isAutomatedMainFolder(i));
+  const isAllSelected = selectableItems.length > 0 && selectableItems.every((i) => selectedIds.includes(i.id));
+  const isIndeterminate = selectedIds.length > 0 && !isAllSelected;
 
   return (
     <div className="overflow-x-auto rounded-2xl border border-slate-700/60 glass-card">
@@ -95,9 +96,9 @@ export default function FileList({
                 type="checkbox"
                 checked={isAllSelected}
                 ref={(el) => { if (el) el.indeterminate = isIndeterminate; }}
-                onChange={() => onSelectAll(isAllSelected ? [] : items.map((i) => i.id))}
+                onChange={() => onSelectAll(isAllSelected ? [] : selectableItems.map((i) => i.id))}
                 className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900 cursor-pointer accent-emerald-500"
-                title="Pilih Semua Berkas & Folder"
+                title="Pilih Semua Berkas & Folder yang Dapat Dikelola"
               />
             </th>
             <th className="py-3 px-3">Nama Berkas / Folder</th>
@@ -141,9 +142,18 @@ export default function FileList({
                   <input
                     type="checkbox"
                     checked={isChecked}
+                    disabled={!user?.isAdmin && isAutomatedMainFolder(item)}
                     onChange={() => onToggleSelect(item.id)}
-                    className="w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900 cursor-pointer accent-emerald-500"
-                    title="Pilih item ini"
+                    className={`w-4 h-4 rounded border-slate-700 bg-slate-800 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900 ${
+                      !user?.isAdmin && isAutomatedMainFolder(item)
+                        ? 'opacity-30 cursor-not-allowed'
+                        : 'cursor-pointer accent-emerald-500'
+                    }`}
+                    title={
+                      !user?.isAdmin && isAutomatedMainFolder(item)
+                        ? 'Folder utama standar SNP dilindungi (Hanya Administrator)'
+                        : 'Pilih item ini'
+                    }
                   />
                 </td>
 
@@ -224,8 +234,8 @@ export default function FileList({
                       <Download className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* Rename & Delete (Hanya jika user memiliki hak tulis di jabatan ini dan tapel tidak terkunci) */}
-                    {canUserWrite(user, item.jabatan, isLocked) ? (
+                    {/* Rename & Delete (Hanya jika user memiliki hak tulis dan folder utama SNP dilindungi untuk non-admin) */}
+                    {canUserWrite(user, item.jabatan, isLocked) && (user?.isAdmin || !isAutomatedMainFolder(item)) ? (
                       <>
                         <button
                           onClick={() => onRename(item)}
@@ -243,7 +253,14 @@ export default function FileList({
                         </button>
                       </>
                     ) : (
-                      <span className="p-1.5 text-slate-500 flex items-center" title="Read-Only (Hanya Lihat & Unduh)">
+                      <span
+                        className="p-1.5 text-slate-500 flex items-center"
+                        title={
+                          isAutomatedMainFolder(item) && !user?.isAdmin
+                            ? 'Folder Utama SNP Terotomatisasi (Hanya Admin)'
+                            : 'Read-Only (Hanya Lihat & Unduh)'
+                        }
+                      >
                         <Lock className="w-3.5 h-3.5 text-slate-500" />
                       </span>
                     )}

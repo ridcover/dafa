@@ -89,13 +89,24 @@ export default function Settings({ onActiveYearChanged }) {
     <div className="space-y-6">
       {/* Alert Messages */}
       {error && (
-        <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs">
-          {error}
+        <div className="p-3.5 rounded-xl bg-rose-500/20 border border-rose-500/30 text-rose-200 text-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <span>{error}</span>
+          <div className="flex items-center space-x-2 flex-shrink-0">
+            <button
+              type="button"
+              onClick={fetchSettings}
+              className="px-3 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg font-semibold transition-colors cursor-pointer"
+            >
+              Coba Muat Ulang
+            </button>
+            <button type="button" onClick={() => setError('')} className="text-rose-300 hover:text-white">✕</button>
+          </div>
         </div>
       )}
       {success && (
-        <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs">
-          {success}
+        <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+          <span>{success}</span>
+          <button type="button" onClick={() => setSuccess('')} className="text-emerald-300 hover:text-white">✕</button>
         </div>
       )}
 

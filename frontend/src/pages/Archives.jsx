@@ -14,10 +14,15 @@ export default function Archives({ user, activeTapel, currentTapel }) {
   const parentPath = searchParams.get('parent_path') || '';
   const searchParam = searchParams.get('search') || '';
   const jabatanParam = searchParams.get('jabatan') || '';
+  const urlTapel = searchParams.get('tapel') || '';
+
+  // Hitung tapel efektif (utamakan URL param, kemudian state currentTapel, lalu activeTapel)
+  const effectiveTapel = urlTapel || currentTapel || activeTapel || '2026/2027';
 
   // Data states
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
   const [searchQuery, setSearchQuery] = useState(searchParam);
   const [selectedItem, setSelectedItem] = useState(null);
   const [isLocked, setIsLocked] = useState(false);
@@ -37,9 +42,10 @@ export default function Archives({ user, activeTapel, currentTapel }) {
   const fetchArchives = async () => {
     try {
       setLoading(true);
+      setFetchError('');
       const res = await api.get('/archives', {
         params: {
-          tapel: currentTapel || activeTapel,
+          tapel: effectiveTapel,
           parent_path: parentPath,
           search: searchQuery,
           jabatan: jabatanParam
@@ -50,6 +56,7 @@ export default function Archives({ user, activeTapel, currentTapel }) {
       setSelectedIds([]); // Reset selection on reload
     } catch (err) {
       console.error('Failed to load archives', err);
+      setFetchError(err.response?.data?.message || 'Gagal memuat arsip. Pastikan server backend dan database terhubung.');
     } finally {
       setLoading(false);
     }
@@ -57,7 +64,7 @@ export default function Archives({ user, activeTapel, currentTapel }) {
 
   useEffect(() => {
     fetchArchives();
-  }, [currentTapel, activeTapel, parentPath, searchQuery, jabatanParam]);
+  }, [effectiveTapel, parentPath, searchQuery, jabatanParam]);
 
   // Handle Search Input Change
   const handleSearchChange = (val) => {
@@ -77,8 +84,8 @@ export default function Archives({ user, activeTapel, currentTapel }) {
     if (newPath) {
       newParams.set('parent_path', newPath);
     }
-    if (currentTapel) {
-      newParams.set('tapel', currentTapel);
+    if (effectiveTapel) {
+      newParams.set('tapel', effectiveTapel);
     }
     setSearchParams(newParams);
     setSearchQuery('');
@@ -100,7 +107,7 @@ export default function Archives({ user, activeTapel, currentTapel }) {
     const tokenParam = token ? `&token=${encodeURIComponent(token)}` : '';
     if (item.isFolder) {
       const folderPath = item.parent_path ? `${item.parent_path}/${item.name}` : item.name;
-      window.location.href = `/api/archives/download-zip?tapel=${encodeURIComponent(currentTapel || activeTapel)}&parent_path=${encodeURIComponent(folderPath)}&name=${encodeURIComponent(item.name)}${tokenParam}`;
+      window.location.href = `/api/archives/download-zip?tapel=${encodeURIComponent(effectiveTapel)}&parent_path=${encodeURIComponent(folderPath)}&name=${encodeURIComponent(item.name)}${tokenParam}`;
     } else {
       window.location.href = `/api/archives/${item.id}/download${token ? '?token=' + encodeURIComponent(token) : ''}`;
     }
@@ -273,6 +280,19 @@ export default function Archives({ user, activeTapel, currentTapel }) {
       {bulkMessage && (
         <div className="p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/30 text-emerald-200 text-xs font-semibold">
           {bulkMessage}
+        </div>
+      )}
+
+      {fetchError && (
+        <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <span>{fetchError}</span>
+          <button
+            type="button"
+            onClick={fetchArchives}
+            className="px-4 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold transition-colors cursor-pointer flex-shrink-0"
+          >
+            Coba Muat Ulang
+          </button>
         </div>
       )}
 

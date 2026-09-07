@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   ShieldCheck, 
   Users, 
@@ -11,7 +12,12 @@ import Settings from '../components/Admin/Settings';
 import AuditLogs from '../components/Admin/AuditLogs';
 
 export default function AdminPanel({ user, onActiveYearChanged }) {
-  const [activeTab, setActiveTab] = useState('users');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') || 'users';
+
+  const handleTabChange = (tab) => {
+    setSearchParams({ tab });
+  };
 
   return (
     <div className="space-y-6">
@@ -39,7 +45,7 @@ export default function AdminPanel({ user, onActiveYearChanged }) {
         {/* Tab Navigation */}
         <div className="flex items-center space-x-2 mt-6 border-b border-slate-700/80 pb-1 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('users')}
+            onClick={() => handleTabChange('users')}
             className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               activeTab === 'users'
                 ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40 shadow-md'
@@ -51,7 +57,7 @@ export default function AdminPanel({ user, onActiveYearChanged }) {
           </button>
 
           <button
-            onClick={() => setActiveTab('settings')}
+            onClick={() => handleTabChange('settings')}
             className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               activeTab === 'settings'
                 ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40 shadow-md'
@@ -63,7 +69,7 @@ export default function AdminPanel({ user, onActiveYearChanged }) {
           </button>
 
           <button
-            onClick={() => setActiveTab('audit')}
+            onClick={() => handleTabChange('audit')}
             className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all ${
               activeTab === 'audit'
                 ? 'bg-purple-600/30 text-purple-200 border border-purple-500/40 shadow-md'

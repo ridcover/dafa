@@ -85,6 +85,43 @@ export const FOLDER_SNP_HIERARCHY = [
   }
 ];
 
+export const ALL_SNP_FOLDER_NAMES = [
+  'Standar Pengelolaan (P)',
+  'Standar Isi (SI)',
+  'Standar Proses (SP)',
+  'Standar Lulusan (SKL)',
+  'Standar Sarpras (SAP)',
+  'Standar Pembiayaan (PB)',
+  'Standar PTK',
+  'Standar Penilaian (PN)'
+];
+
+/**
+ * Deteksi apakah item merupakan folder utama atau subfolder 8 SNP terotomatisasi
+ */
+export function isAutomatedMainFolder(item) {
+  if (!item || (!item.isFolder && item.isFolder !== 1)) return false;
+  if (item.isMainFolder !== undefined) return Boolean(item.isMainFolder);
+
+  // Level 0: Root folder jabatan (parent_path kosong atau null)
+  if (!item.parent_path || item.parent_path.trim() === '') return true;
+
+  const cleanParent = item.parent_path.replace(/\\/g, '/').trim();
+  // Level 1: Subfolder terotomatisasi di bawah root jabatan
+  const isSnpSubfolder = FOLDER_SNP_HIERARCHY.some(s => 
+    s.jabatan === item.jabatan && 
+    cleanParent === s.jabatan && 
+    s.folders.includes(item.name)
+  );
+  if (isSnpSubfolder) return true;
+
+  if (!cleanParent.includes('/') && ALL_SNP_FOLDER_NAMES.includes(item.name)) {
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Helper untuk mengecek apakah user memiliki hak Tulis (Upload, Buat Folder, Rename, Delete)
  */

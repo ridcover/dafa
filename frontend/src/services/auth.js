@@ -23,9 +23,11 @@ export const authService = {
   // Logout
   logout: async () => {
     try {
-      await api.post('/auth/logout');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      await api.post('/auth/logout', {}, { timeout: 3000 });
     } catch (e) {
-      console.warn('Logout request error:', e);
+      console.warn('Logout request notice:', e?.message || e);
     } finally {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

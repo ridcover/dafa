@@ -15,7 +15,7 @@ import {
   Info,
   FolderTree
 } from 'lucide-react';
-import { JABATAN_MAP, ROLES_LIST, normalizeJabatan, canUserWrite } from '../../utils/constants';
+import { JABATAN_MAP, ROLES_LIST, normalizeJabatan, canUserWrite, isAutomatedMainFolder } from '../../utils/constants';
 import api from '../../services/api';
 
 export default function FileActions({
@@ -173,6 +173,11 @@ export default function FileActions({
       return;
     }
 
+    if (!user?.isAdmin && isAutomatedMainFolder(itemToRename)) {
+      setRenameError('Folder utama standar SNP yang terotomatisasi dilindungi dan tidak dapat diubah namanya.');
+      return;
+    }
+
     try {
       setIsRenaming(true);
       setRenameError('');
@@ -192,6 +197,11 @@ export default function FileActions({
 
   // Submit Delete
   const handleDeleteSubmit = async () => {
+    if (!user?.isAdmin && isAutomatedMainFolder(itemToDelete)) {
+      setDeleteError('Folder utama standar SNP yang terotomatisasi dilindungi dan tidak dapat dihapus oleh non-admin.');
+      return;
+    }
+
     try {
       setIsDeleting(true);
       setDeleteError('');
