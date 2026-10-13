@@ -60,6 +60,23 @@ async function getActiveTapel() {
 }
 
 /**
+ * Helper: Ambil daftar tahun pelajaran terbuka (is_open = 1)
+ */
+async function getOpenTapelList() {
+  try {
+    const [openRows] = await pool.query('SELECT ta FROM tahun_akademik WHERE is_open = 1');
+    const openList = openRows.map((r) => r.ta);
+    const activeTapel = await getActiveTapel();
+    if (!openList.includes(activeTapel)) {
+      openList.push(activeTapel);
+    }
+    return openList;
+  } catch (err) {
+    return ['2026/2027'];
+  }
+}
+
+/**
  * GET /api/archives
  * Mengambil daftar arsip dan folder berdasarkan tapel, parent_path, search
  * Catatan: Seluruh pengguna terautentikasi dapat melihat & mengunduh berkas di seluruh folder (Read-Only lintas jabatan)
@@ -67,12 +84,13 @@ async function getActiveTapel() {
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const activeTapel = await getActiveTapel();
+    const openTapelList = await getOpenTapelList();
     const tapel = req.query.tapel || activeTapel;
     const parentPath = req.query.parent_path !== undefined ? req.query.parent_path : '';
     const search = req.query.search ? req.query.search.trim() : '';
     const jabatanFilter = req.query.jabatan ? normalizeJabatanKey(req.query.jabatan) : '';
 
-    const isLocked = tapel !== activeTapel;
+    const isLocked = !openTapelList.includes(tapel);
 
     let query = '';
     let params = [];
@@ -124,6 +142,7 @@ router.get('/', authenticateToken, async (req, res) => {
       data: enrichedRows,
       isLocked: isLocked,
       activeTapel: activeTapel,
+      openTapelList: openTapelList,
       currentTapel: tapel,
       parentPath: parentPath
     });
@@ -341,6 +360,16 @@ router.post('/folder', authenticateToken, checkLockedYear, async (req, res) => {
       return res.status(400).json({ success: false, message: 'Nama folder tidak boleh kosong.' });
     }
 
+    const folderName = name.trim().replace(/[\/\\:*?"<>|]/g, '');
+    if (!folderName) {
+      return res.status(400).json({ success: false, message: 'Nama folder tidak valid.' });
+    }
+
+    const activeTapel = await getActiveTapel();
+    const currentTapel = tapel || activeTapel;
+    const parentPath = parent_path || '';
+    const targetJabatan = normalizeJabatanKey(jabatan || (parentPath ? parentPath.split('/')[0] : 'guru'));
+
     // Cek apakah folder sudah ada di DB
     const [existing] = await pool.query(
       'SELECT id FROM archives WHERE tapel = ? AND parent_path = ? AND name = ? AND isFolder = 1',
@@ -358,7 +387,7 @@ router.post('/folder', authenticateToken, checkLockedYear, async (req, res) => {
       const rel = parentPath.replace(/\\/g, '/').split('/').filter(Boolean).join(path.sep);
       targetDiskPath = path.join(targetDiskPath, rel, folderName);
     } else {
-      targetDiskPath = path.join(targetDiskPath, sanitizePathSegment(targetJabatan), folderName);
+      targetDiskPath = path.join(targetDiskPath, folderName);
     }
 
     if (!fs.existsSync(targetDiskPath)) {
@@ -427,8 +456,8 @@ router.put('/:id/rename', authenticateToken, checkLockedYear, async (req, res) =
     const item = archives[0];
 
     // Cek penguncian tahun (hanya berlaku untuk non-admin)
-    const activeTapel = await getActiveTapel();
-    if (!req.user.isAdmin && item.tapel !== activeTapel) {
+    const openTapelList = await getOpenTapelList();
+    if (!req.user.isAdmin && !openTapelList.includes(item.tapel)) {
       return res.status(403).json({
         success: false,
         message: `Arsip Tahun Pelajaran '${item.tapel}' telah dikunci (Read-Only).`
@@ -521,8 +550,8 @@ router.delete('/:id', authenticateToken, checkLockedYear, async (req, res) => {
     const item = archives[0];
 
     // Cek penguncian tahun (hanya berlaku untuk non-admin)
-    const activeTapel = await getActiveTapel();
-    if (!req.user.isAdmin && item.tapel !== activeTapel) {
+    const openTapelList = await getOpenTapelList();
+    if (!req.user.isAdmin && !openTapelList.includes(item.tapel)) {
       return res.status(403).json({
         success: false,
         message: `Arsip Tahun Pelajaran '${item.tapel}' telah dikunci (Read-Only).`
@@ -706,6 +735,7 @@ router.post('/bulk-delete', authenticateToken, async (req, res) => {
     }
 
     const activeTapel = await getActiveTapel();
+    const openTapelList = await getOpenTapelList();
     const [archives] = await pool.query('SELECT * FROM archives WHERE id IN (?)', [ids]);
 
     if (archives.length === 0) {
@@ -719,7 +749,7 @@ router.post('/bulk-delete', authenticateToken, async (req, res) => {
       // Validasi hak akses
       const normalizedJabatan = normalizeJabatanKey(item.jabatan);
       const hasPermission = req.user.isAdmin || (req.user.access && req.user.access[normalizedJabatan]);
-      const isYearAllowed = req.user.isAdmin || item.tapel === activeTapel;
+      const isYearAllowed = req.user.isAdmin || openTapelList.includes(item.tapel);
 
       if (!hasPermission || !isYearAllowed) {
         continue; // Lewati item yang tidak berizin

@@ -13,7 +13,7 @@ async function syncPhysicalUploadsToDb() {
   try {
     const tapelDirs = fs.readdirSync(UPLOADS_BASE).filter((f) => {
       const p = path.join(UPLOADS_BASE, f);
-      return fs.existsSync(p) && fs.statSync(p).isDirectory();
+      return fs.existsSync(p) && fs.statSync(p).isDirectory() && /^\d{4}[-_/]\d{4}$/.test(f);
     });
 
     for (const tapelDir of tapelDirs) {

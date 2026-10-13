@@ -20,9 +20,20 @@ router.get('/tahun-akademik', authenticateToken, async (req, res) => {
 
     const activeTapel = settings.length > 0 ? settings[0].active_tahun_pelajaran : '2026/2027';
 
+    const yearList = years.map(y => ({
+      id: y.id,
+      ta: y.ta,
+      isOpen: y.is_open === 1 || y.is_open === true || y.ta === activeTapel,
+      isDefault: y.ta === activeTapel
+    }));
+
+    const openYears = yearList.filter(y => y.isOpen).map(y => y.ta);
+
     return res.json({
       success: true,
       years: years.map(y => y.ta),
+      yearDetails: yearList,
+      openYears: openYears,
       activeTahun: activeTapel,
       currentCalculatedTapel: getCalculatedAcademicYear(),
       transitionInfo: getNextTransitionInfo()
@@ -53,7 +64,7 @@ router.post('/tahun-akademik', authenticateToken, requireAdmin, async (req, res)
       return res.status(400).json({ success: false, message: `Tahun akademik '${cleanTa}' sudah ada.` });
     }
 
-    await pool.query('INSERT INTO tahun_akademik (ta) VALUES (?)', [cleanTa]);
+    await pool.query('INSERT INTO tahun_akademik (ta, is_open) VALUES (?, 0)', [cleanTa]);
 
     // Otomatis buat struktur folder SNP untuk tahun ini
     await generateSNPStructure(cleanTa);
@@ -90,19 +101,87 @@ router.put('/active-tahun', authenticateToken, requireAdmin, async (req, res) =>
       [newTapel, newTapel]
     );
 
+    // Pastikan tahun utama selalu berstatus terbuka (is_open = 1)
+    await pool.query('UPDATE tahun_akademik SET is_open = 1 WHERE ta = ?', [newTapel]);
+
     // Otomatis buat struktur folder SNP jika belum ada
     await generateSNPStructure(newTapel);
 
-    await logActivity(req, 'SET_ACTIVE_YEAR', `Mengaktifkan Tahun Pelajaran '${newTapel}'.`);
+    await logActivity(req, 'SET_ACTIVE_YEAR', `Mengaktifkan Tahun Pelajaran utama '${newTapel}'.`);
 
     return res.json({
       success: true,
-      message: `Tahun Pelajaran '${newTapel}' berhasil diaktifkan. Struktur 8 SNP telah siap.`,
+      message: `Tahun Pelajaran '${newTapel}' berhasil ditetapkan sebagai tahun utama. Struktur 8 SNP telah siap.`,
       activeTahun: newTapel
     });
   } catch (err) {
     console.error(`[Set Active Tahun Error]`, err);
     return res.status(500).json({ success: false, message: 'Gagal mengaktifkan tahun pelajaran.' });
+  }
+});
+
+/**
+ * PUT /api/settings/toggle-tahun-status
+ * Mengubah status buka/kunci suatu tahun pelajaran (Admin only)
+ */
+router.put('/toggle-tahun-status', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { ta, isOpen } = req.body;
+
+    if (!ta || !ta.trim()) {
+      return res.status(400).json({ success: false, message: 'Tahun pelajaran wajib ditentukan.' });
+    }
+
+    const cleanTa = ta.trim();
+    const newStatus = isOpen ? 1 : 0;
+
+    // Jika ingin mengunci, pastikan bukan tahun pelajaran default/utama dan masih ada tahun lain yang terbuka
+    const [settings] = await pool.query('SELECT active_tahun_pelajaran FROM global_settings WHERE id = 1');
+    const defaultTapel = settings.length > 0 ? settings[0].active_tahun_pelajaran : '2026/2027';
+
+    if (newStatus === 0 && cleanTa === defaultTapel) {
+      return res.status(400).json({
+        success: false,
+        message: `Tahun pelajaran utama ('${cleanTa}') tidak dapat dikunci. Pindahkan status tahun utama terlebih dahulu jika ingin menguncinya.`
+      });
+    }
+
+    if (newStatus === 0) {
+      const [otherOpen] = await pool.query('SELECT id FROM tahun_akademik WHERE is_open = 1 AND ta != ?', [cleanTa]);
+      if (otherOpen.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Minimal harus ada 1 Tahun Pelajaran yang berstatus terbuka.'
+        });
+      }
+    }
+
+    await pool.query('UPDATE tahun_akademik SET is_open = ? WHERE ta = ?', [newStatus, cleanTa]);
+
+    // Jika dibuka, pastikan struktur folder SNP sudah ada
+    if (newStatus === 1) {
+      await generateSNPStructure(cleanTa);
+    }
+
+    await logActivity(
+      req,
+      'TOGGLE_TAHUN_STATUS',
+      `${newStatus === 1 ? 'Membuka' : 'Mengunci'} Tahun Pelajaran '${cleanTa}'.`
+    );
+
+    const [openRows] = await pool.query('SELECT ta FROM tahun_akademik WHERE is_open = 1');
+    const openYears = openRows.map(r => r.ta);
+
+    return res.json({
+      success: true,
+      message: `Tahun Pelajaran '${cleanTa}' berhasil ${newStatus === 1 ? 'dibuka (Read-Write)' : 'dikunci (Read-Only)'}.`,
+      ta: cleanTa,
+      isOpen: Boolean(newStatus),
+      openYears
+    });
+  } catch (err) {
+    console.error(`[Toggle Tahun Status Error]`, err);
+    return res.status(500).json({ success: false, message: 'Gagal memperbarui status tahun pelajaran.' });
   }
 });
 

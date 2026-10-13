@@ -43,7 +43,8 @@ CREATE TABLE `client_access` (
 -- 4. Tabel Tahun Akademik
 CREATE TABLE `tahun_akademik` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `ta` VARCHAR(50) UNIQUE NOT NULL
+    `ta` VARCHAR(50) UNIQUE NOT NULL,
+    `is_open` TINYINT(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Tabel Global Settings
@@ -138,11 +139,11 @@ INSERT INTO `client_access` (`user_id`, `kepsek`, `waka_kurikulum`, `waka_kesisw
 (19, 0, 0, 0, 0, 0, 0, 1), -- Nafisah (Guru Seni Rupa/BK)
 (20, 0, 0, 0, 0, 0, 0, 1); -- Jihanisme Difanti (Guru Informatika)
 
--- Seed Tahun Akademik
-INSERT INTO `tahun_akademik` (`id`, `ta`) VALUES
-(1, '2024/2025'),
-(2, '2025/2026'),
-(3, '2026/2027');
+-- Seed Tahun Akademik (Hanya tahun utama 2026/2027 yang default terbuka)
+INSERT INTO `tahun_akademik` (`id`, `ta`, `is_open`) VALUES
+(1, '2024/2025', 0),
+(2, '2025/2026', 0),
+(3, '2026/2027', 1);
 
 -- Seed Global Settings (Tahun Aktif Default: 2026/2027 per tanggal 28-08-2026)
 INSERT INTO `global_settings` (`id`, `active_tahun_pelajaran`) VALUES

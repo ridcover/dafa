@@ -19,6 +19,8 @@ export default function Header({
   currentTapel, 
   onSelectTapel, 
   allTapelList = [], 
+  yearDetails = [],
+  openYears = [],
   onToggleSidebar 
 }) {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -44,7 +46,7 @@ export default function Header({
     };
   }, [showProfileMenu]);
 
-  const isLockedYear = currentTapel && activeTapel && currentTapel !== activeTapel;
+  const isLockedYear = currentTapel && openYears && openYears.length > 0 && !openYears.includes(currentTapel);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -119,11 +121,21 @@ export default function Header({
               onChange={(e) => onSelectTapel && onSelectTapel(e.target.value)}
               className="bg-transparent text-xs sm:text-sm font-medium text-slate-200 focus:outline-none cursor-pointer pr-2"
             >
-              {allTapelList.map((ta) => (
-                <option key={ta} value={ta} className="bg-slate-900 text-slate-200">
-                  TP {ta} {ta === activeTapel ? '(Aktif)' : ''}
-                </option>
-              ))}
+              {allTapelList.map((ta) => {
+                const detail = yearDetails.find((y) => y.ta === ta);
+                const isOpen = detail ? detail.isOpen : openYears.includes(ta);
+                const isDefault = detail ? detail.isDefault : ta === activeTapel;
+                let statusLabel = '';
+                if (isDefault) statusLabel = '(Utama)';
+                else if (isOpen) statusLabel = '(Terbuka)';
+                else statusLabel = '(Terkunci)';
+
+                return (
+                  <option key={ta} value={ta} className="bg-slate-900 text-slate-200">
+                    TP {ta} {statusLabel}
+                  </option>
+                );
+              })}
             </select>
 
             {isLockedYear && (

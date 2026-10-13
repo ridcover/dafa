@@ -18,6 +18,8 @@ export default function App() {
   const [activeTapel, setActiveTapel] = useState(() => localStorage.getItem('activeTapel') || '2026/2027');
   const [currentTapel, setCurrentTapel] = useState(() => localStorage.getItem('currentTapel') || '2026/2027');
   const [allTapelList, setAllTapelList] = useState(['2024/2025', '2025/2026', '2026/2027']);
+  const [yearDetails, setYearDetails] = useState([]);
+  const [openYears, setOpenYears] = useState(['2026/2027']);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -60,6 +62,9 @@ export default function App() {
       if (user) {
         const res = await api.get('/settings/tahun-akademik');
         setAllTapelList(res.data.years || ['2026/2027']);
+        setYearDetails(res.data.yearDetails || []);
+        const serverOpenYears = res.data.openYears || [res.data.activeTahun || '2026/2027'];
+        setOpenYears(serverOpenYears);
         const backendActive = res.data.activeTahun || '2026/2027';
         setActiveTapel(backendActive);
         localStorage.setItem('activeTapel', backendActive);
@@ -150,6 +155,8 @@ export default function App() {
             currentTapel={currentTapel}
             onSelectTapel={handleSelectTapel}
             allTapelList={allTapelList}
+            yearDetails={yearDetails}
+            openYears={openYears}
             onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
           />
 
@@ -163,6 +170,7 @@ export default function App() {
                     user={user}
                     activeTapel={activeTapel}
                     currentTapel={currentTapel}
+                    openYears={openYears}
                   />
                 }
               />
@@ -173,6 +181,7 @@ export default function App() {
                     user={user}
                     activeTapel={activeTapel}
                     currentTapel={currentTapel}
+                    openYears={openYears}
                   />
                 }
               />

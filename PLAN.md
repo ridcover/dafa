@@ -15,3 +15,5 @@
 - [TASK_PROPOSED] 6 Perbaikan: Background clear, Auto-name display, Preview inline, Admin full tapel access, Actor folder restriction, Multi-select checkbox - 2026-09-03
 - [TASK_COMPLETED] Selesai menerapkan 6 perbaikan: Background clear, Auto-name display, Inline preview, Admin all-tapel access, Actor folder restrictions, Multi-select checkbox & bulk actions - 2026-09-03
 - [GIT_PUSH] Push pembaruan 6 fitur ke main (commit 126b96f) - 2026-09-03
+- [BUGFIX_COMPLETED] Memperbaiki ReferenceError variabel belum terdefinisi (currentTapel, parentPath, folderName, targetJabatan) pada endpoint POST /api/archives/folder - 2026-10-13
+- [FEATURE_COMPLETED] Selesai menerapkan fitur Multi-Year Access (Admin dapat membuka/mengunci status lebih dari 1 tahun pelajaran secara independen) - 2026-10-13

@@ -7,7 +7,7 @@ import FilePreview from '../components/FileManager/FilePreview';
 import FileActions from '../components/FileManager/FileActions';
 import api from '../services/api';
 
-export default function Archives({ user, activeTapel, currentTapel }) {
+export default function Archives({ user, activeTapel, currentTapel, openYears = [] }) {
   const [searchParams, setSearchParams] = useSearchParams();
   
   // URL Param states
@@ -176,21 +176,21 @@ export default function Archives({ user, activeTapel, currentTapel }) {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2.5 font-bold text-amber-300">
               <Lock className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <span>Arsip Terkunci (Read-Only) - Tahun Pelajaran {currentTapel || activeTapel}</span>
+              <span>Arsip Terkunci (Read-Only) - Tahun Pelajaran {effectiveTapel}</span>
             </div>
             <span className="text-[10px] bg-amber-500/30 text-amber-300 px-2 py-0.5 rounded font-bold uppercase tracking-wider">
               Read-Only
             </span>
           </div>
           <p className="text-slate-300 leading-relaxed text-[11px] sm:text-xs">
-            Anda sedang melihat arsip <strong>Tahun Pelajaran {currentTapel || activeTapel}</strong> yang berstatus <strong>Read-Only</strong> (berkas hanya dapat dilihat dan diunduh). Setiap tanggal <strong>01 Juli adalah awal dari tahun ajaran baru</strong> sehingga sistem secara otomatis mengunci (Read-Only) seluruh arsip tahun pelajaran sebelumnya guna menjamin integritas dan keutuhan data dokumen sekolah.
+            Anda sedang melihat arsip <strong>Tahun Pelajaran {effectiveTapel}</strong> yang berstatus <strong>Read-Only</strong> (berkas hanya dapat dilihat dan diunduh). Tahun pelajaran ini telah dikunci oleh Administrator guna menjamin integritas dan keutuhan data dokumen sekolah.
           </p>
         </div>
       ) : isLocked && user?.isAdmin ? (
         <div className="p-3.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-200 text-xs shadow-lg flex items-center justify-between animate-fade-in">
           <div className="flex items-center space-x-2.5 font-bold text-emerald-300">
             <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-            <span>Tahun Pelajaran Lampau ({currentTapel || activeTapel}) - Mode Administrator (Akses Penuh Kelola Berkas & Folder)</span>
+            <span>Tahun Pelajaran Lampau ({effectiveTapel}) - Mode Administrator (Akses Penuh Kelola Berkas & Folder)</span>
           </div>
           <span className="text-[10px] bg-emerald-500/30 text-emerald-300 px-2.5 py-0.5 rounded-lg font-bold uppercase tracking-wider">
             Admin Mode

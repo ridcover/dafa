@@ -61,9 +61,24 @@ async function testConnection() {
       await connection.query(`
         CREATE TABLE IF NOT EXISTS tahun_akademik (
           id INT AUTO_INCREMENT PRIMARY KEY,
-          ta VARCHAR(50) UNIQUE NOT NULL
+          ta VARCHAR(50) UNIQUE NOT NULL,
+          is_open TINYINT(1) DEFAULT 0
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
       `);
+
+      // Pastikan kolom is_open ada pada tabel tahun_akademik (migrasi aman)
+      try {
+        const [colCheck] = await connection.query(`
+          SHOW COLUMNS FROM tahun_akademik LIKE 'is_open'
+        `);
+        if (colCheck.length === 0) {
+          await connection.query(`
+            ALTER TABLE tahun_akademik ADD COLUMN is_open TINYINT(1) DEFAULT 0 AFTER ta
+          `);
+        }
+      } catch (colErr) {
+        console.warn('[DB Migration Warning]', colErr.message);
+      }
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS global_settings (
@@ -78,11 +93,19 @@ async function testConnection() {
       `);
 
       await connection.query(`
-        INSERT IGNORE INTO tahun_akademik (id, ta) VALUES 
-        (1, '2024/2025'),
-        (2, '2025/2026'),
-        (3, '2026/2027');
+        INSERT IGNORE INTO tahun_akademik (id, ta, is_open) VALUES 
+        (1, '2024/2025', 0),
+        (2, '2025/2026', 0),
+        (3, '2026/2027', 1);
       `);
+
+      // Pastikan tahun utama yang aktif selalu terbuka (is_open = 1)
+      try {
+        const [sRows] = await connection.query('SELECT active_tahun_pelajaran FROM global_settings WHERE id = 1');
+        if (sRows.length > 0) {
+          await connection.query('UPDATE tahun_akademik SET is_open = 1 WHERE ta = ?', [sRows[0].active_tahun_pelajaran]);
+        }
+      } catch (e) {}
 
       await connection.query(`
         CREATE TABLE IF NOT EXISTS archives (

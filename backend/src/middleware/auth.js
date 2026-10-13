@@ -145,14 +145,22 @@ async function checkLockedYear(req, res, next) {
       return next();
     }
 
-    // Ambil tahun aktif dari database
+    // Ambil daftar tahun pelajaran yang berstatus terbuka (is_open = 1)
+    const [openRows] = await pool.query('SELECT ta FROM tahun_akademik WHERE is_open = 1');
+    const openYears = openRows.map((r) => r.ta);
+
+    // Fallback: pastikan active_tahun_pelajaran dari global_settings selalu berstatus terbuka
     let activeTapel = '2026/2027';
     try {
       const [settings] = await pool.query('SELECT active_tahun_pelajaran FROM global_settings WHERE id = 1');
       if (settings.length > 0) activeTapel = settings[0].active_tahun_pelajaran;
     } catch (e) {}
 
-    if (activeTapel && requestedTapel !== activeTapel) {
+    if (activeTapel && !openYears.includes(activeTapel)) {
+      openYears.push(activeTapel);
+    }
+
+    if (!openYears.includes(requestedTapel)) {
       return res.status(403).json({
         success: false,
         isLocked: true,

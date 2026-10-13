@@ -18,13 +18,13 @@ import { SNP_LIST, formatBytes, formatDate, JABATAN_MAP } from '../utils/constan
 import api from '../services/api';
 import FilePreview from '../components/FileManager/FilePreview';
 
-export default function Dashboard({ user, activeTapel, currentTapel }) {
+export default function Dashboard({ user, activeTapel, currentTapel, openYears = [] }) {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [previewItem, setPreviewItem] = useState(null);
 
-  const isLockedYear = currentTapel && activeTapel && currentTapel !== activeTapel;
+  const isLockedYear = currentTapel && openYears && openYears.length > 0 && !openYears.includes(currentTapel);
 
   const fetchStats = async () => {
     try {
@@ -51,7 +51,7 @@ export default function Dashboard({ user, activeTapel, currentTapel }) {
   return (
     <div className="space-y-6">
       {/* Read-Only Banner if Locked */}
-      {isLockedYear && (
+      {isLockedYear && !user?.isAdmin && (
         <div className="p-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-200 text-xs shadow-lg space-y-1.5 animate-fade-in">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2.5 font-bold text-amber-300">

@@ -77,9 +77,9 @@ async function ensureMySQLRunning() {
 async function startServers() {
   await ensureMySQLRunning();
 
-  // 1. Jalankan Backend (Port 5000)
-  console.log('\x1b[33m%s\x1b[0m', '[Backend] Memulai server Express di port 5000...');
-  backendProcess = spawn(npmCmd, ['start'], {
+  // 1. Jalankan Backend (Port 5000) dengan auto-reload watch mode
+  console.log('\x1b[33m%s\x1b[0m', '[Backend] Memulai server Express di port 5000 (watch mode)...');
+  backendProcess = spawn(npmCmd, ['run', 'dev'], {
     cwd: path.join(__dirname, 'backend'),
     stdio: 'inherit',
     shell: true
